@@ -114,6 +114,26 @@ describe('importCsvWithPreset', () => {
   it('rejects an unknown preset', () => {
     expect(() => importCsvWithPreset('a\n1', 'sap')).toThrow(RangeError)
   })
+
+  it('imports a PayPal-style export (signed Gross, FR dates/decimals)', () => {
+    const csv = [
+      'Date,Name,Currency,Gross',
+      '10/01/2026,Client A,EUR,"1.200,00"',
+      '15/01/2026,Remboursement,EUR,"-50,00"',
+    ].join('\n')
+    const txs = importCsvWithPreset(csv, 'paypal')
+    expect(txs[0]).toMatchObject({ date: '2026-01-10', amount: 1200, currency: 'EUR', source: 'paypal' })
+    expect(txs[1]!.amount).toBe(-50)
+  })
+
+  it('imports a generic FR bank export (débit/crédit)', () => {
+    const csv = ['Date;Libellé;Débit;Crédit', '10/01/2026;Vente;;1 200,00', '11/01/2026;Loyer;800,00;'].join(
+      '\n',
+    )
+    const txs = importCsvWithPreset(csv, 'bank_fr')
+    expect(txs[0]).toMatchObject({ date: '2026-01-10', amount: 1200, label: 'Vente', source: 'bank' })
+    expect(txs[1]!.amount).toBe(-800)
+  })
 })
 
 describe('parseAmount — single-separator ambiguity contract', () => {

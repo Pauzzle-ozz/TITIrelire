@@ -318,6 +318,17 @@ export const CSV_PRESETS: Record<string, CsvPreset> = {
     // FR export: a lone comma is the decimal separator.
     options: { source: 'qonto', decimal: ',' },
   },
+  paypal: {
+    mapping: { date: 'Date', amount: 'Gross', currency: 'Currency', label: 'Name' },
+    // FR PayPal activity export: dd/mm/yyyy dates, comma decimals.
+    options: { source: 'paypal', dateFormat: 'dd/mm/yyyy', decimal: ',' },
+  },
+  // Generic FR bank statement with separate Débit/Crédit columns. Bank exports vary a
+  // lot; treat this as a starting point and override the mapping if needed.
+  bank_fr: {
+    mapping: { date: 'Date', label: 'Libellé', debit: 'Débit', credit: 'Crédit' },
+    options: { source: 'bank', dateFormat: 'dd/mm/yyyy', decimal: ',' },
+  },
 }
 
 /** Imports CSV using a named preset, with optional mapping/option overrides. */

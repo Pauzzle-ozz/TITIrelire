@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   presets (generic, Stripe, Qonto).
 - **Stripe connector** as the reference live-API `TransactionSource` (cursor pagination,
   injectable HTTP, runs server-side/self-hosted).
+- **Bridge connector** for bank / Open Banking (DSP2) aggregation: `next_uri` pagination,
+  signed bank amounts, deleted-tombstone skipping, page-cap truncation guard, self-hosted.
+- Additional CSV presets: PayPal and generic FR bank (débit/crédit) exports.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md): design principles, the local-first vs
   live-connectors stance, and the roadmap for both workstreams (fiscal coverage + data
   connection).

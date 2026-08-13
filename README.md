@@ -75,10 +75,12 @@ const { summary, comparison } = compareFromTransactions(txs, { activity: 'presta
 console.log(summary.revenue, comparison.recommended)
 ```
 
-- **File import** (CSV/exports) runs locally, no secrets — works with almost any tool.
-- **Live connectors** (e.g. Stripe) use API secrets, so they run **server-side / self-hosted**,
-  never in the browser. See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the design and the
-  full roadmap (more connectors, bank/DSP2, Factur-X, and broader fiscal profiles).
+- **File import** (CSV/exports) runs locally, no secrets — presets for generic, Stripe,
+  Qonto, PayPal and FR bank exports, or pass a custom column mapping.
+- **Live connectors** use API secrets, so they run **server-side / self-hosted**, never in the
+  browser: `StripeConnector` (payments) and `BridgeConnector` (bank / Open Banking DSP2). See
+  [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the design and the full roadmap (more connectors,
+  Factur-X, and broader fiscal profiles).
 
 ## Development
 

@@ -79,11 +79,12 @@ following the micro-entrepreneur module as the template. Parameters are dated an
 ### Track B — Data connection
 
 1. **Canonical model + aggregation** — ✅ done.
-2. **CSV import + presets** — ✅ done (generic, Stripe, Qonto). Add more presets (bank
-   exports, PayPal, Shopify, common CRMs) — each is just a mapping.
-3. **Reference live connector (Stripe)** — ✅ done. Generalize the `TransactionSource` port.
-4. **Bank / Open Banking (DSP2)** via an aggregator (Powens/Bridge…) — self-hosted connector.
-5. **More payment/CRM connectors** — PayPal, SumUp, Shopify, Dolibarr, HubSpot…
+2. **CSV import + presets** — ✅ done (generic, Stripe, Qonto, PayPal, bank FR). Add more
+   presets (Shopify, SumUp, common CRMs) — each is just a mapping.
+3. **Reference live connector (Stripe)** — ✅ done. `TransactionSource` port generalized.
+4. **Bank / Open Banking (DSP2)** via an aggregator — ✅ reference connector done
+   (`BridgeConnector`, self-hosted). Add Powens and others behind the same port.
+5. **More payment/CRM connectors** — SumUp, Shopify, Dolibarr, HubSpot…
 6. **Factur-X import** — e-invoicing is mandatory in France (reception 2026-09, emission for
    VSE/SME 2027-09); ingesting Factur-X is a strategic, well-timed source.
 7. **Optional self-hosted connector service** — manages OAuth for live sync, kept optional.
