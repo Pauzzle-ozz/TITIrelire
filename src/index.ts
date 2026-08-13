@@ -25,3 +25,11 @@ export type {
 } from './engine/types.js'
 
 export { normalize, simulate } from './engine/simulate.js'
+
+export type {
+  Comparison,
+  ComparisonOption,
+  CompareInput,
+} from './engine/compare.js'
+
+export { compare } from './engine/compare.js'
