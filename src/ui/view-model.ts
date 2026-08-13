@@ -74,7 +74,7 @@ export function toViewModel(comparison: Comparison): ViewModel {
     comparison.recommended === 'bareme' ? comparison.bareme : comparison.versementLiberatoire
 
   return {
-    recommendationTitle: `Recommandation : ${modeLabel(comparison.recommended)}`,
+    recommendationTitle: `Recommandation : ${capitalize(modeLabel(comparison.recommended))}`,
     recommendationDetail: comparison.explanation,
     netHighlight: formatEUR(recommended.netIncome),
     effectiveRate: formatPct(recommended.result.effectiveLevyRate),

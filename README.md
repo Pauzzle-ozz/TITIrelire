@@ -34,7 +34,7 @@ leaves your device.
   and reasoning behind every euro.
 - 💡 **Optimisation** — compares the *versement libératoire* against the progressive scale and
   recommends the cheaper one, in euros.
-- 🧮 **Accurate & auditable** — 2026 parameters, each cross-checked against ≥ 2 sources and
+- 🧮 **Accurate & auditable** — 2026 parameters, checked against public sources and
   documented in [`docs/parameters-2026.md`](./docs/parameters-2026.md).
 - 🔒 **Local-first** — runs entirely in the browser; nothing is sent anywhere.
 - 🧩 **Built on [publicodes](https://publi.codes)** — the open, explainable rule language
@@ -48,10 +48,11 @@ npm run dev      # start the local app (http://localhost:5173)
 npm run build    # build the static app into dist/
 ```
 
-Prefer the library directly? Import the engine:
+The engine is also usable programmatically (TypeScript). A published npm package is on the
+roadmap; for now, import it from the source within the repo (as the tests do):
 
 ```ts
-import { compare, simulate } from 'titirelire'
+import { compare, simulate } from './src/index.js'
 
 const result = simulate({ activity: 'prestations_bnc', revenue: 40000 })
 console.log(result.netIncome, result.breakdown)

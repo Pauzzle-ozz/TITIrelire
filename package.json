@@ -15,9 +15,6 @@
     "simulator",
     "open-source"
   ],
-  "exports": {
-    ".": "./src/index.ts"
-  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

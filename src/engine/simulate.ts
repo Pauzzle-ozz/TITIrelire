@@ -83,9 +83,22 @@ export function normalize(raw: SimulationInput): NormalizedInput {
   }
 }
 
+/**
+ * Evaluates a rate rule and returns it as a *ratio* (0.123), not a percentage.
+ *
+ * publicodes stores rates in percent units, so `taux cotisations` evaluates to
+ * 12.3, `taux CFP` to 0.1, etc. Dividing by 100 restores the ratio contract used
+ * throughout the API (see {@link LineItem.rate}) and expected by {@link pct}.
+ */
+function evRate(rule: string): number {
+  // Round to 6 decimals to keep the ratio clean (rates never need more precision)
+  // and free of binary-float noise (e.g. 0.022000000000000002).
+  return Math.round((evNumber(rule) / 100) * 1e6) / 1e6
+}
+
 /** Formats a ratio as a French percentage string (e.g. 0.212 → "21,2 %"). */
 function pct(ratio: number): string {
-  const rounded = Math.round(ratio * 1000) / 10
+  const rounded = Math.round(ratio * 10000) / 100
   return `${String(rounded).replace('.', ',')} %`
 }
 
@@ -158,10 +171,10 @@ export function simulate(raw: SimulationInput): SimulationResult {
     'micro . foyer . autres revenus imposables': input.otherHouseholdTaxableIncome,
   })
 
-  const socialRate = evNumber('micro . taux cotisations effectif')
+  const socialRate = evRate('micro . taux cotisations effectif')
   const socialAmount = round2(evNumber('micro . cotisations sociales'))
   const acreNote = input.acre
-    ? ` (ACRE : réduction de ${pct(evNumber('micro . réduction ACRE'))} sur les cotisations)`
+    ? ` (ACRE : réduction de ${pct(evRate('micro . réduction ACRE'))} sur les cotisations)`
     : ''
   const socialContributions: LineItem = {
     key: 'cotisations_sociales',
@@ -172,38 +185,54 @@ export function simulate(raw: SimulationInput): SimulationResult {
     detail: `${eur(input.revenue)} × ${pct(socialRate)}${acreNote}`,
   }
 
-  const cfpRate = evNumber('micro . taux CFP')
+  const cfpRate = evRate('micro . taux CFP')
+  // For BIC services the artisanal CFP rate (0,3 %) is assumed; flag the caveat
+  // inline so the line-item stays honest (see docs/parameters-2026.md).
+  const cfpCaveat =
+    input.activity === 'prestations_bic'
+      ? ' — taux artisanal supposé (0,1 % pour une activité purement commerciale)'
+      : ''
   const trainingContribution: LineItem = {
     key: 'cfp',
     label: 'Contribution à la formation professionnelle (CFP)',
     amount: round2(evNumber('micro . CFP')),
     base: input.revenue,
     rate: cfpRate,
-    detail: `${eur(input.revenue)} × ${pct(cfpRate)}`,
+    detail: `${eur(input.revenue)} × ${pct(cfpRate)}${cfpCaveat}`,
   }
 
   const taxableIncome = round2(evNumber('micro . revenu imposable'))
   const incomeTaxMode = input.versementLiberatoire ? 'versement_liberatoire' : 'bareme'
+  // Single source of truth: the amount comes from `impôt sur le revenu`, the same
+  // rule the `prélèvements totaux` aggregate uses. We only branch for presentation.
+  const incomeTaxAmount = round2(evNumber('micro . impôt sur le revenu'))
   let incomeTax: LineItem
   if (input.versementLiberatoire) {
-    const vlRate = evNumber('micro . taux versement libératoire')
+    const vlRate = evRate('micro . taux versement libératoire')
     incomeTax = {
       key: 'impot_revenu',
       label: 'Impôt sur le revenu (versement libératoire)',
-      amount: round2(evNumber('micro . montant versement libératoire')),
+      amount: incomeTaxAmount,
       base: input.revenue,
       rate: vlRate,
       detail: `${eur(input.revenue)} × ${pct(vlRate)}`,
     }
   } else {
-    const abatement = evNumber('micro . taux abattement')
+    const abatementRate = evRate('micro . taux abattement')
+    const abatementAmount = round2(evNumber('micro . abattement'))
+    // The flat allowance has a 305 € floor (capped at turnover): when it wins over
+    // the percentage, explain the actual euro allowance rather than a misleading %.
+    const floorApplies = input.revenue * abatementRate < Math.min(305, input.revenue)
+    const abatementText = floorApplies
+      ? `Abattement forfaitaire de ${eur(abatementAmount)} (minimum 305 €)`
+      : `Abattement de ${pct(abatementRate)}`
     incomeTax = {
       key: 'impot_revenu',
       label: 'Impôt sur le revenu (barème progressif)',
-      amount: round2(evNumber('micro . impôt barème')),
+      amount: incomeTaxAmount,
       base: taxableIncome,
       detail:
-        `Abattement de ${pct(abatement)} → revenu imposable ${eur(taxableIncome)}, ` +
+        `${abatementText} → revenu imposable ${eur(taxableIncome)}, ` +
         `puis barème progressif 2026 sur le foyer (${input.parts} part(s)).`,
     }
   }

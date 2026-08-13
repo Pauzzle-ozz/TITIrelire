@@ -67,6 +67,26 @@ describe('compare — structure and explanation', () => {
   })
 })
 
+describe('compare — tie and extra coverage', () => {
+  it('ties at zero turnover and defaults to the barème', () => {
+    const c = compare({ activity: 'vente_marchandises', revenue: 0 })
+    expect(c.netGain).toBe(0)
+    expect(c.recommended).toBe('bareme')
+    expect(c.explanation).toContain('même revenu net')
+    expect(c.explanation).toContain('par défaut')
+  })
+
+  it('handles prestations_bic with ACRE through the comparator', () => {
+    const c = compare({ activity: 'prestations_bic', revenue: 80000, acre: true })
+    const recommendedNet =
+      c.recommended === 'bareme' ? c.bareme.netIncome : c.versementLiberatoire.netIncome
+    expect(recommendedNet).toBe(Math.max(c.bareme.netIncome, c.versementLiberatoire.netIncome))
+    // ACRE-reduced social contributions (80 000 × 21,2 % × 50 %) flow into both options.
+    expect(c.bareme.result.socialContributions.amount).toBe(8480)
+    expect(c.versementLiberatoire.result.socialContributions.amount).toBe(8480)
+  })
+})
+
 describe('compare — invalid input', () => {
   it('propagates validation errors', () => {
     expect(() => compare({ activity: 'vente_marchandises', revenue: -1 })).toThrow(RangeError)

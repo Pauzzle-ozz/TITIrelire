@@ -1,9 +1,9 @@
 # Micro-entrepreneur parameters — 2026
 
 This is the sourced reference for every figure hard-coded in
-[`src/engine/rules.ts`](../src/engine/rules.ts). Each value was cross-checked against at
-least two independent sources in August 2026. **This is not tax advice**; it is a
-best-effort, transparent model. If you spot an error, please open an issue or a PR — the
+[`src/engine/rules.ts`](../src/engine/rules.ts). Each value was checked against public
+sources (see below) in August 2026. **This is not tax advice**; it is a best-effort,
+transparent model. If you spot an error, please open an issue or a PR — the
 whole point of TI'TIrelire is that the numbers are auditable.
 
 > Scope of V1: the four main micro-entrepreneur categories, income tax (progressive scale
@@ -74,10 +74,14 @@ services would be 0.10 %. This is surfaced in the line-item detail.
 
 ## Régime thresholds (2026)
 
-| | Micro ceiling | VAT franchise (base / tolerance) |
-|---|---|---|
-| Sale of goods / accommodation | **203 100 €** | **85 000 € / 93 500 €** |
-| Services / liberal | **83 600 €** | **37 500 € / 41 250 €** |
+| | Micro ceiling | VAT franchise (base) | VAT tolerance |
+|---|---|---|---|
+| Sale of goods / accommodation | **203 100 €** | **85 000 €** | 93 500 € |
+| Services / liberal | **83 600 €** | **37 500 €** | 41 250 € |
+
+Only the **micro ceiling** and the **VAT franchise base** are modelled in `rules.ts` (they
+drive the threshold warnings). The **VAT tolerance** (seuil majoré) column is context only —
+not modelled in V1 (see the scope note above).
 
 The unified 25 000 € VAT threshold debated in 2025 was abandoned (loi n° 2025-1044 of
 2025-11-03); the activity-based thresholds remain.

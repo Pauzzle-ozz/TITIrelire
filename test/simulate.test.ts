@@ -159,6 +159,123 @@ describe('simulate — edge cases', () => {
   })
 })
 
+describe('simulate — transparent detail strings (rates as ratios, not ×100)', () => {
+  it('states the real percentages in the breakdown detail (vente 50 000 €)', () => {
+    const r = simulate({ activity: 'vente_marchandises', revenue: 50000 })
+    expect(r.socialContributions.rate).toBe(0.123)
+    expect(r.socialContributions.detail).toContain('12,3 %')
+    expect(r.trainingContribution.rate).toBe(0.001)
+    expect(r.trainingContribution.detail).toContain('0,1 %')
+    expect(r.incomeTax.detail).toContain('71 %')
+  })
+
+  it('states the effective ACRE-reduced rate and the relief (vente 50 000 €, ACRE)', () => {
+    const r = simulate({ activity: 'vente_marchandises', revenue: 50000, acre: true })
+    expect(r.socialContributions.rate).toBe(0.0615)
+    expect(r.socialContributions.detail).toContain('6,15 %')
+    expect(r.socialContributions.detail).toContain('50 %')
+    // The stated rate matches the amount: 50 000 × 6,15 % = 3075.
+    expect(r.socialContributions.amount).toBe(3075)
+  })
+
+  it('states the flat-tax rate under versement libératoire (BNC 40 000 €)', () => {
+    const r = simulate({ activity: 'prestations_bnc', revenue: 40000, versementLiberatoire: true })
+    expect(r.incomeTax.rate).toBe(0.022)
+    expect(r.incomeTax.detail).toContain('2,2 %')
+  })
+
+  it('flags the CFP artisanal assumption only for prestations_bic', () => {
+    expect(simulate({ activity: 'prestations_bic', revenue: 30000 }).trainingContribution.detail).toContain(
+      'artisanal',
+    )
+    expect(simulate({ activity: 'vente_marchandises', revenue: 30000 }).trainingContribution.detail).not.toContain(
+      'artisanal',
+    )
+  })
+
+  it('explains the euro allowance (not a %) when the 305 € floor applies', () => {
+    const r = simulate({ activity: 'vente_marchandises', revenue: 400 })
+    expect(r.taxableIncome).toBe(95) // 400 − max(284, 305) = 95
+    expect(r.incomeTax.detail).toContain('305')
+  })
+})
+
+describe('simulate — threshold boundaries (strict >)', () => {
+  it('does not warn exactly at the micro ceiling, warns one euro over', () => {
+    expect(
+      simulate({ activity: 'vente_marchandises', revenue: 203100 }).warnings.some(
+        (w) => w.code === 'depassement_plafond_micro',
+      ),
+    ).toBe(false)
+    expect(
+      simulate({ activity: 'vente_marchandises', revenue: 203101 }).warnings.some(
+        (w) => w.code === 'depassement_plafond_micro',
+      ),
+    ).toBe(true)
+    expect(
+      simulate({ activity: 'prestations_bnc', revenue: 83600 }).warnings.some(
+        (w) => w.code === 'depassement_plafond_micro',
+      ),
+    ).toBe(false)
+    expect(
+      simulate({ activity: 'prestations_bnc', revenue: 83601 }).warnings.some(
+        (w) => w.code === 'depassement_plafond_micro',
+      ),
+    ).toBe(true)
+  })
+
+  it('does not warn exactly at the TVA franchise, warns one euro over', () => {
+    expect(
+      simulate({ activity: 'prestations_bnc', revenue: 37500 }).warnings.some(
+        (w) => w.code === 'depassement_franchise_tva',
+      ),
+    ).toBe(false)
+    expect(
+      simulate({ activity: 'prestations_bnc', revenue: 37501 }).warnings.some(
+        (w) => w.code === 'depassement_franchise_tva',
+      ),
+    ).toBe(true)
+    expect(
+      simulate({ activity: 'vente_marchandises', revenue: 85000 }).warnings.some(
+        (w) => w.code === 'depassement_franchise_tva',
+      ),
+    ).toBe(false)
+    expect(
+      simulate({ activity: 'vente_marchandises', revenue: 85001 }).warnings.some(
+        (w) => w.code === 'depassement_franchise_tva',
+      ),
+    ).toBe(true)
+  })
+})
+
+describe('simulate — full rate table coverage', () => {
+  it('prestations BIC under versement libératoire (1,7 %)', () => {
+    const r = simulate({ activity: 'prestations_bic', revenue: 30000, versementLiberatoire: true })
+    expect(r.incomeTaxMode).toBe('versement_liberatoire')
+    expect(r.incomeTax.amount).toBe(510) // 30 000 × 1,7 %
+  })
+
+  it('reaches the 41 % bracket via other household income', () => {
+    const r = simulate({
+      activity: 'vente_marchandises',
+      revenue: 50000,
+      otherHouseholdTaxableIncome: 100000,
+    })
+    // Marginal IR on the 14 500 € micro income sitting across the 30/41 % edge.
+    expect(r.incomeTax.amount).toBe(5945)
+  })
+
+  it('reaches the 45 % bracket via other household income', () => {
+    const r = simulate({
+      activity: 'vente_marchandises',
+      revenue: 50000,
+      otherHouseholdTaxableIncome: 200000,
+    })
+    // The whole 14 500 € sits above 181 917 € → 14 500 × 45 %.
+    expect(r.incomeTax.amount).toBe(6525)
+  })
+})
+
 describe('simulate — invalid input', () => {
   it('rejects negative turnover', () => {
     expect(() => simulate({ activity: 'vente_marchandises', revenue: -1 })).toThrow(RangeError)
