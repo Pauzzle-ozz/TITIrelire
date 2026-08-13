@@ -8,25 +8,50 @@
  *
  * Scope: the standardized CII XML payload (`factur-x.xml`). Extracting the XML from the
  * PDF/A-3 container is a separate step (out of scope here). Runs locally, no secrets.
+ *
+ * The parser is defensive: it validates the XML is well-formed, tolerates repeated
+ * elements (takes the first), checks the date format code (102), validates the amount
+ * strictly, and rejects credit notes / non-positive totals rather than silently booking
+ * them as expenses.
  */
-import { XMLParser } from 'fast-xml-parser'
+import { XMLParser, XMLValidator } from 'fast-xml-parser'
 
 import { normalizeAll } from '../normalize.js'
 import type { Transaction } from '../types.js'
 
 const parser = new XMLParser({ removeNSPrefix: true, ignoreAttributes: false, parseTagValue: false })
 
-type XmlNode = string | { '#text'?: string; [key: string]: unknown } | undefined
+/** Returns the value as an object, or undefined if it is a scalar/array/nullish. */
+function asObject(node: unknown): Record<string, unknown> | undefined {
+  return node !== null && typeof node === 'object' && !Array.isArray(node)
+    ? (node as Record<string, unknown>)
+    : undefined
+}
 
-/** Returns the text content of a node (handles both plain strings and `{ '#text' }`). */
-function text(node: XmlNode): string | undefined {
-  if (typeof node === 'string') return node
-  if (node && typeof node === 'object' && typeof node['#text'] === 'string') return node['#text']
-  return undefined
+/** Returns the first element of an array node, or the node itself. */
+function first(node: unknown): unknown {
+  return Array.isArray(node) ? node[0] : node
+}
+
+/** Reads a child value from a (possibly array-wrapped) parent object. */
+function child(parent: unknown, key: string): unknown {
+  const o = asObject(first(parent))
+  return o ? o[key] : undefined
+}
+
+/** Returns the text content of a (possibly array-wrapped) node. */
+function text(node: unknown): string | undefined {
+  const n = first(node)
+  if (typeof n === 'string') return n
+  const o = asObject(n)
+  return o && typeof o['#text'] === 'string' ? o['#text'] : undefined
 }
 
 /** Converts a CII date (format 102, `YYYYMMDD`) to ISO `YYYY-MM-DD`. */
-function ciiDateToIso(raw: string | undefined): string {
+function ciiDateToIso(raw: string | undefined, formatCode: string | undefined): string {
+  if (formatCode !== undefined && formatCode !== '102') {
+    throw new RangeError(`Factur-X: unsupported date format code ${formatCode} (expected 102)`)
+  }
   if (raw === undefined || !/^\d{8}$/.test(raw)) {
     throw new RangeError(`Factur-X: unexpected issue date "${String(raw)}" (expected YYYYMMDD)`)
   }
@@ -36,47 +61,58 @@ function ciiDateToIso(raw: string | undefined): string {
 /**
  * Parses one Factur-X CII XML invoice into a canonical income transaction.
  *
- * The amount is the invoice grand total (TTC, BT-112), i.e. the money the invoice bills.
+ * The amount is the invoice grand total (TTC, BT-112); DuePayableAmount is used only as a
+ * fallback when the grand total is absent. Credit notes / non-positive totals are rejected.
  *
- * @throws RangeError if the document is not CII or a required field is missing/invalid.
+ * @throws RangeError if the XML is malformed, not CII, or a required field is missing/invalid.
  */
 export function parseFacturX(xml: string): Transaction {
-  const root = parser.parse(xml) as Record<string, unknown>
-  const invoice = root['CrossIndustryInvoice'] as Record<string, unknown> | undefined
+  const validation = XMLValidator.validate(xml)
+  if (validation !== true) {
+    throw new RangeError(`Factur-X: malformed XML (${validation.err.msg})`)
+  }
+  let root: Record<string, unknown>
+  try {
+    root = parser.parse(xml) as Record<string, unknown>
+  } catch {
+    throw new RangeError('Factur-X: unparseable XML')
+  }
+
+  const invoice = asObject(first(root['CrossIndustryInvoice']))
   if (invoice === undefined) {
     throw new RangeError('Factur-X: not a Cross Industry Invoice (CII) document')
   }
 
-  const document = invoice['ExchangedDocument'] as Record<string, XmlNode> | undefined
-  const transaction = invoice['SupplyChainTradeTransaction'] as Record<string, unknown> | undefined
-  const agreement = transaction?.['ApplicableHeaderTradeAgreement'] as Record<string, unknown> | undefined
-  const settlement = transaction?.['ApplicableHeaderTradeSettlement'] as Record<string, unknown> | undefined
-  const summation = settlement?.['SpecifiedTradeSettlementHeaderMonetarySummation'] as
-    | Record<string, XmlNode>
-    | undefined
+  const document = invoice['ExchangedDocument']
+  const trade = invoice['SupplyChainTradeTransaction']
+  const agreement = child(trade, 'ApplicableHeaderTradeAgreement')
+  const settlement = child(trade, 'ApplicableHeaderTradeSettlement')
+  const summation = child(settlement, 'SpecifiedTradeSettlementHeaderMonetarySummation')
 
-  const invoiceId = text(document?.['ID'])
+  const invoiceId = text(child(document, 'ID'))
   if (invoiceId === undefined || invoiceId.trim() === '') {
     throw new RangeError('Factur-X: missing invoice ID')
   }
 
-  const issueDate = (document?.['IssueDateTime'] as Record<string, XmlNode> | undefined)?.['DateTimeString']
-  const date = ciiDateToIso(text(issueDate))
+  const dateNode = child(child(document, 'IssueDateTime'), 'DateTimeString')
+  const formatCode = text(asObject(first(dateNode))?.['@_format'])
+  const date = ciiDateToIso(text(dateNode), formatCode)
 
-  const currency = text(settlement?.['InvoiceCurrencyCode'] as XmlNode)
+  const currency = text(child(settlement, 'InvoiceCurrencyCode'))
   if (currency === undefined || currency.trim() === '') {
     throw new RangeError('Factur-X: missing invoice currency')
   }
 
-  const totalRaw = text(summation?.['GrandTotalAmount']) ?? text(summation?.['DuePayableAmount'])
-  const amount = Number(totalRaw)
-  if (totalRaw === undefined || !Number.isFinite(amount)) {
+  const totalRaw = text(child(summation, 'GrandTotalAmount')) ?? text(child(summation, 'DuePayableAmount'))
+  if (totalRaw === undefined || !/^-?\d+(?:\.\d+)?$/.test(totalRaw.trim())) {
     throw new RangeError(`Factur-X: missing or invalid grand total "${String(totalRaw)}"`)
   }
+  const amount = Number(totalRaw.trim())
+  if (amount <= 0) {
+    throw new RangeError(`Factur-X: non-positive total ${amount} (credit notes are not supported)`)
+  }
 
-  const buyerName = text(
-    (agreement?.['BuyerTradeParty'] as Record<string, XmlNode> | undefined)?.['Name'],
-  )
+  const buyerName = text(child(child(agreement, 'BuyerTradeParty'), 'Name'))
 
   return normalizeAll([
     {

@@ -53,13 +53,21 @@ export function configFromEnv(
   switch (name) {
     case 'stripe':
       return { apiKey: env['STRIPE_API_KEY'] ?? '' }
-    case 'bridge':
-      return {
+    case 'bridge': {
+      const config: Record<string, unknown> = {
         accessToken: env['BRIDGE_ACCESS_TOKEN'] ?? '',
         clientId: env['BRIDGE_CLIENT_ID'] ?? '',
         clientSecret: env['BRIDGE_CLIENT_SECRET'] ?? '',
-        ...(env['BRIDGE_ACCOUNT_ID'] !== undefined ? { accountId: Number(env['BRIDGE_ACCOUNT_ID']) } : {}),
       }
+      if (env['BRIDGE_ACCOUNT_ID'] !== undefined) {
+        const accountId = Number(env['BRIDGE_ACCOUNT_ID'])
+        if (!Number.isInteger(accountId) || accountId < 1) {
+          throw new RangeError('BRIDGE_ACCOUNT_ID must be a positive integer')
+        }
+        config['accountId'] = accountId
+      }
+      return config
+    }
     default:
       throw new RangeError(`Unknown connector: ${name} (expected one of ${CONNECTORS.join(', ')})`)
   }
@@ -78,18 +86,36 @@ const USAGE =
   'Usage: titirelire-connect <stripe|bridge> [--since YYYY-MM-DD] [--until YYYY-MM-DD]\n' +
   'Secrets are read from the environment (e.g. STRIPE_API_KEY, BRIDGE_ACCESS_TOKEN…).'
 
-/** Parses `--key value` flags into a map. */
+const KNOWN_FLAGS = new Set(['since', 'until'])
+
+/**
+ * Parses `--key value` and `--key=value` flags into a map. Only known flags are accepted;
+ * an unknown flag, a stray positional, or a flag with no value throws (surfaced as a usage
+ * error). Silent drops would mean a wider-than-intended fetch — so we fail loudly.
+ */
 function parseFlags(args: string[]): Record<string, string> {
   const flags: Record<string, string> = {}
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i]!
-    if (arg.startsWith('--')) {
-      const value = args[i + 1]
-      if (value !== undefined && !value.startsWith('--')) {
-        flags[arg.slice(2)] = value
-        i += 1
+    if (!arg.startsWith('--')) throw new RangeError(`Unexpected argument: ${arg}`)
+
+    const eq = arg.indexOf('=')
+    let key: string
+    let value: string | undefined
+    if (eq !== -1) {
+      key = arg.slice(2, eq)
+      value = arg.slice(eq + 1)
+    } else {
+      key = arg.slice(2)
+      const next = args[i + 1]
+      if (next === undefined || next.startsWith('--')) {
+        throw new RangeError(`Flag --${key} requires a value`)
       }
+      value = next
+      i += 1
     }
+    if (!KNOWN_FLAGS.has(key)) throw new RangeError(`Unknown flag: --${key}`)
+    flags[key] = value
   }
   return flags
 }
@@ -109,7 +135,13 @@ export async function cliMain(deps: CliDeps): Promise<number> {
     return 2
   }
 
-  const flags = parseFlags(rest)
+  let flags: Record<string, string>
+  try {
+    flags = parseFlags(rest)
+  } catch (error) {
+    deps.stderr(`${error instanceof Error ? error.message : String(error)}\n${USAGE}`)
+    return 2
+  }
   const range: FetchRange = {
     ...(flags['since'] !== undefined ? { since: flags['since'] } : {}),
     ...(flags['until'] !== undefined ? { until: flags['until'] } : {}),

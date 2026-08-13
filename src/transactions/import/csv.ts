@@ -48,6 +48,11 @@ export interface CsvOptions {
   source?: string
   /** Keep the original CSV row in `Transaction.raw`. Default false (data minimization). */
   keepRaw?: boolean
+  /**
+   * Skip rows whose (single) amount column is blank. Useful for exports with one row per
+   * line item where order-level totals appear only on the first row (e.g. Shopify orders).
+   */
+  skipEmptyAmount?: boolean
 }
 
 /** A named, ready-to-use mapping for a known export format. */
@@ -260,7 +265,10 @@ export function importCsv(text: string, mapping: CsvMapping, options: CsvOptions
 
   const occurrence = new Map<string, number>()
 
-  const raws: RawTransaction[] = rows.slice(1).map((row) => {
+  const raws: RawTransaction[] = rows.slice(1).flatMap((row) => {
+    if (options.skipEmptyAmount && amountCol !== undefined && cell(row, amountCol) === '') {
+      return []
+    }
     const date = parseDate(cell(row, dateCol), options.dateFormat)
 
     let amount: number
@@ -339,10 +347,11 @@ export const CSV_PRESETS: Record<string, CsvPreset> = {
     mapping: { date: 'Date', label: 'Libellé', debit: 'Débit', credit: 'Crédit' },
     options: { source: 'bank', dateFormat: 'dd/mm/yyyy', decimal: ',' },
   },
-  // Shopify orders export ("Created at" is a datetime; "Total" is the order total).
+  // Shopify orders export ("Created at" is a datetime; "Total" is the order total, present
+  // only on the first row of each order — line-item rows with a blank Total are skipped).
   shopify: {
     mapping: { id: 'Name', date: 'Created at', amount: 'Total', currency: 'Currency', label: 'Name' },
-    options: { source: 'shopify', decimal: '.' },
+    options: { source: 'shopify', decimal: '.', skipEmptyAmount: true },
   },
   // SumUp transactions export (best-effort; override the mapping to match your report).
   sumup: {

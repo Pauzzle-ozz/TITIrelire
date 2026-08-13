@@ -100,6 +100,33 @@ Per household part, after the quotient familial:
 
 Set by the loi de finances 2026, indexed +0.9 % on inflation.
 
+## Salaried individual (income tax)
+
+| Parameter | Value |
+|---|---|
+| Professional-expenses deduction | **10 %** (min **499 €**, ceiling **14 556 €**) |
+| PER deduction floor / ceiling | **4 710 € / 37 680 €** (10 % of PASS 2025 / of 8× PASS 2025) |
+| PASS 2026 | 48 060 € |
+
+Frais réels may be used instead of the 10 % forfait (no ceiling). The abattement ceiling
+figure varies slightly across sources (14 171–14 556 €) and rarely binds; it is isolated in
+`particulier.ts`.
+
+## Company — SASU (corporate tax & dividends)
+
+| Parameter | Value |
+|---|---|
+| IS reduced rate | **15 %** up to **42 500 €** (CA < 10 M€, capital libéré, ≥ 75 % personnes physiques) |
+| IS normal rate | **25 %** |
+| PFU (flat tax) on dividends | **30 %** = 12,8 % IR + 17,2 % prélèvements sociaux |
+| Dividend allowance (barème option) | **40 %** |
+
+⚠️ **2026 caveat:** several sources report prélèvements sociaux rising to **18,6 %** (PFU
+**31,4 %**) in 2026. This model keeps the well-established **17,2 %** and surfaces the caveat;
+the rate is a single constant in `societe.ts`. Out of scope: the EURL gérant-majoritaire case
+(dividends above 10 % of capital reclassified as TNS contributions) and the salaire-vs-dividende
+arbitrage (needs a payroll model).
+
 ## Sources
 
 - URSSAF — auto-entrepreneur contribution rates:

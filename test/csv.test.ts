@@ -145,7 +145,21 @@ describe('importCsvWithPreset', () => {
   it('imports a Shopify orders export', () => {
     const csv = ['Name,Created at,Total,Currency', '#1001,2026-01-10 12:00:00 +0100,120.00,EUR'].join('\n')
     const txs = importCsvWithPreset(csv, 'shopify')
-    expect(txs[0]).toMatchObject({ id: '#1001', date: '2026-01-10', amount: 120, currency: 'EUR', source: 'shopify' })
+    expect(txs[0]).toMatchObject({ id: '#1001', date: '2026-01-10', amount: 120, currency: 'EUR', label: '#1001', source: 'shopify' })
+  })
+
+  it('skips blank-Total line-item rows in a multi-line Shopify export', () => {
+    const csv = [
+      'Name,Created at,Total,Currency',
+      '#1001,2026-01-10 12:00:00 +0100,120.00,EUR', // order total on first row
+      '#1001,2026-01-10 12:00:00 +0100,,EUR', // line-item row, blank Total → skipped
+      '#1002,2026-01-11 09:00:00 +0100,80.00,EUR',
+    ].join('\n')
+    const txs = importCsvWithPreset(csv, 'shopify')
+    expect(txs.map((t) => [t.id, t.amount])).toEqual([
+      ['#1001', 120],
+      ['#1002', 80],
+    ])
   })
 
   it('imports a SumUp transactions export', () => {
