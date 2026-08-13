@@ -62,19 +62,21 @@ server-side: the pattern generalizes to every future live connector.
 
 Target audience order (large/medium companies are explicitly out of scope for now):
 
-1. **Indépendants / libéraux** — ✅ micro-entrepreneur simulator (done). Next: régime réel
+1. **Indépendants / libéraux** — ✅ micro-entrepreneur simulator. Next: régime réel
    (BNC/BIC réel), TVA (franchise → réel simplifié/normal), CFE.
-2. **Particulier** — income tax on salaries + household optimisation (PER, déficit foncier,
-   dons, garde d'enfants…). Reuses the barème already modelled.
-3. **Société unipersonnelle (EURL/SASU)** — dirigeant remuneration, IS vs IR, dividends +
-   flat tax (PFU), the salary/dividend trade-off.
+2. **Particulier** — ✅ salary income tax (10 % / frais réels) + **PER optimisation**
+   (`simulateParticulier` / `comparePER`). Next: déficit foncier, dons, garde d'enfants.
+3. **Société unipersonnelle** — ✅ SASU corporate tax (IS 15/25 %) + dividend taxation,
+   **PFU vs barème** (`simulateSociete` / `compareDividendes`). Next: EURL gérant-majoritaire
+   (dividends > 10 % of capital → TNS), salaire-vs-dividende arbitrage (needs a payroll model).
 4. **TPE < 10 salariés** — light payroll cost (super-gross → net), IS, VAT.
 5. **Light bookkeeping** — recettes/dépenses ledger (needed for réel régimes), fed directly
    by the data-connection layer.
 
-Each profile is a new set of publicodes rules + a typed `simulate*`/`compare*` entry point,
-following the micro-entrepreneur module as the template. Parameters are dated and sourced
-(see [`docs/parameters-2026.md`](./docs/parameters-2026.md)).
+Each profile is a typed `simulate*`/`compare*` entry point over the shared 2026 barème
+(`src/engine/bareme.ts`). The micro module is expressed in publicodes; the newer profiles are
+plain TypeScript — unifying both on publicodes is a roadmap item. Parameters are dated and
+sourced (see [`docs/parameters-2026.md`](./docs/parameters-2026.md)).
 
 ### Track B — Data connection
 

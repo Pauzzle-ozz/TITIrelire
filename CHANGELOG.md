@@ -34,7 +34,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   injectable HTTP, runs server-side/self-hosted).
 - **Bridge connector** for bank / Open Banking (DSP2) aggregation: `next_uri` pagination,
   signed bank amounts, deleted-tombstone skipping, page-cap truncation guard, self-hosted.
-- Additional CSV presets: PayPal and generic FR bank (débit/crédit) exports.
+- Additional CSV presets: PayPal, generic FR bank (débit/crédit), Shopify and SumUp exports.
+- **Factur-X (CII XML) invoice import** (`parseFacturX` / `importFacturX`) — strategic given
+  the French e-invoicing mandate — with defensive parsing (malformed-XML rejection, repeated
+  elements, date format-102, strict amount, credit-note rejection).
+- **Self-hosted connector runner** (`buildConnector` / `runConnector` / `cliMain`): fetch a
+  connector's transactions outside the browser and emit canonical JSON (secrets from the env).
+- **Salaried-individual profile** (`simulateParticulier` / `comparePER`): income tax with the
+  10 % deduction (or frais réels) and a PER optimisation (tax saving + real net cost).
+- **Single-shareholder company profile** (`impotSocietes` / `simulateSociete` /
+  `compareDividendes`): SASU corporate tax (15 %/25 %) and dividend taxation, PFU vs barème.
+- Shared 2026 income-tax scale (`impotBareme` / `impotMarginal`) reused across profiles.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md): design principles, the local-first vs
   live-connectors stance, and the roadmap for both workstreams (fiscal coverage + data
   connection).

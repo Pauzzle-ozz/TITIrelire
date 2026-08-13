@@ -37,6 +37,8 @@ leaves your device.
 - 🧮 **Accurate & auditable** — 2026 parameters, checked against public sources and
   documented in [`docs/parameters-2026.md`](./docs/parameters-2026.md).
 - 🔒 **Local-first** — runs entirely in the browser; nothing is sent anywhere.
+- 👥 **Multiple profiles** — micro-entrepreneur, salaried individual (income tax + PER
+  optimisation), and single-shareholder company (SASU: IS + dividends, PFU vs barème).
 - 🧩 **Built on [publicodes](https://publi.codes)** — the open, explainable rule language
   maintained by the French state (URSSAF), so the legal rules stay separate from the code.
 
