@@ -58,3 +58,13 @@ export {
   simulateFromTransactions,
   compareFromTransactions,
 } from './transactions/from-transactions.js'
+
+export type { CsvMapping, CsvOptions, CsvPreset } from './transactions/import/csv.js'
+export {
+  importCsv,
+  importCsvWithPreset,
+  parseCsv,
+  parseAmount,
+  parseDate,
+  CSV_PRESETS,
+} from './transactions/import/csv.js'
