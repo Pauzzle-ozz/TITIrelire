@@ -13,6 +13,7 @@
 import { normalizeAll } from '../normalize.js'
 import type { RawTransaction, Transaction } from '../types.js'
 import { defaultHttpClient, type FetchRange, type HttpClient, type TransactionSource } from './types.js'
+import { assertIsoDate } from './util.js'
 
 export interface StripeConfig {
   /** Stripe secret API key (`sk_...`). */
@@ -49,15 +50,6 @@ interface StripeList {
 /** Converts a unix timestamp (seconds) to an ISO `YYYY-MM-DD` date (UTC). */
 function unixToIsoDate(seconds: number): string {
   return new Date(seconds * 1000).toISOString().slice(0, 10)
-}
-
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
-
-/** Validates a FetchRange bound is an ISO date, throwing a clear local error otherwise. */
-function assertIsoDate(date: string, field: string): void {
-  if (!ISO_DATE.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) {
-    throw new RangeError(`Invalid FetchRange ${field}: ${date} (expected YYYY-MM-DD)`)
-  }
 }
 
 /** Converts an ISO date to a unix timestamp (seconds) at the given UTC time-of-day. */
