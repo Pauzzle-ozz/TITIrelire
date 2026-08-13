@@ -58,3 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Privacy/boundary hardening: raw provider payloads are opt-in (`keepRaw`, default off); the
   UI imports the engine directly so connectors can never enter the browser bundle (guarded by
   a test); low-level CSV parser helpers are no longer part of the public API.
+- Connector hardening (DSP2 review): shared range validation (reject inverted `since`/`until`)
+  and positive-integer page limits for both Stripe and Bridge; Bridge detects a stalled
+  `next_uri`; CSV header matching is accent-insensitive; `parseAmount` normalizes non-breaking
+  spaces.
