@@ -36,6 +36,7 @@ describe('parseAmount', () => {
     ['-42,00', -42],
     ['(99.90)', -99.9],
     ['€ 1 000,00', 1000],
+    ['1 234,56', 1234.56], // non-breaking-space thousands (FR)
   ])('parses %s → %s', (input, expected) => {
     expect(parseAmount(input)).toBe(expected)
   })
@@ -133,6 +134,24 @@ describe('importCsvWithPreset', () => {
     const txs = importCsvWithPreset(csv, 'bank_fr')
     expect(txs[0]).toMatchObject({ date: '2026-01-10', amount: 1200, label: 'Vente', source: 'bank' })
     expect(txs[1]!.amount).toBe(-800)
+  })
+
+  it('matches FR bank headers even without accents (Debit/Credit/Libelle)', () => {
+    const csv = ['Date;Libelle;Debit;Credit', '10/01/2026;Vente;;1 200,00'].join('\n')
+    const txs = importCsvWithPreset(csv, 'bank_fr')
+    expect(txs[0]).toMatchObject({ amount: 1200, label: 'Vente' })
+  })
+
+  it('handles bank_fr edge amounts via the preset path', () => {
+    const csv = [
+      'Date;Libellé;Débit;Crédit',
+      '10/01/2026;Vide;;', // both empty → 0
+      '11/01/2026;Signé;-800,00;', // already-signed debit → -800
+      '12/01/2026;Gros;;1 234,56', // thousands-grouped credit
+    ].join('\n')
+    const txs = importCsvWithPreset(csv, 'bank_fr')
+    expect(txs.map((t) => t.amount)).toEqual([0, -800, 1234.56])
+    expect(txs.every((t) => t.source === 'bank')).toBe(true)
   })
 })
 

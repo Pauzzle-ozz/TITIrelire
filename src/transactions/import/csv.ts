@@ -144,7 +144,8 @@ export function parseCsv(text: string, delimiter?: string): string[][] {
  * negatives. A lone separator is treated as a decimal point unless `decimal` is given.
  */
 export function parseAmount(value: string, decimal?: '.' | ','): number {
-  let s = value.replace(/ /g, ' ').trim()
+  // Normalize non-breaking / narrow spaces (FR thousands separators) to a plain space.
+  let s = value.replace(/[   ]/g, ' ').trim()
   if (s === '') return Number.NaN
 
   let negative = false
@@ -193,6 +194,15 @@ export function parseDate(value: string, format: CsvOptions['dateFormat'] = 'iso
   return format === 'dd/mm/yyyy' ? `${c}-${pad(b)}-${pad(a)}` : `${c}-${pad(a)}-${pad(b)}`
 }
 
+/** Normalizes a header/column name for matching: trim, lowercase, strip accents. */
+function foldKey(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+}
+
 /** Small deterministic hash (djb2) for content-derived ids. */
 function hash(input: string): string {
   let h = 5381
@@ -216,14 +226,14 @@ export function importCsv(text: string, mapping: CsvMapping, options: CsvOptions
   const rows = parseCsv(text, options.delimiter)
   if (rows.length < 2) return []
 
-  const header = rows[0]!.map((h) => h.trim().toLowerCase())
+  const header = rows[0]!.map((h) => foldKey(h))
   const index = new Map<string, number>()
   header.forEach((name, i) => {
     if (!index.has(name)) index.set(name, i)
   })
 
   const column = (name: string | undefined): number | undefined =>
-    name === undefined ? undefined : index.get(name.trim().toLowerCase())
+    name === undefined ? undefined : index.get(foldKey(name))
 
   const requireColumn = (name: string): number => {
     const i = column(name)

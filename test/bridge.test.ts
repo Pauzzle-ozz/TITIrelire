@@ -154,6 +154,64 @@ describe('BridgeConnector', () => {
     await expect(new BridgeConnector({ ...config, http }).fetchTransactions()).rejects.toThrow(/401/)
   })
 
+  it('returns [] for an empty page and for a missing resources key', async () => {
+    const empty = await new BridgeConnector({ ...config, http: mockHttp([{ resources: [] }]).http }).fetchTransactions()
+    expect(empty).toEqual([])
+    const missing: HttpClient = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ pagination: { next_uri: null } }),
+      text: async () => '{}',
+    })
+    expect(await new BridgeConnector({ ...config, http: missing }).fetchTransactions()).toEqual([])
+  })
+
+  it('maps every field correctly across pages, incl. fallback and deleted-skip on page 2', async () => {
+    const { http } = mockHttp([
+      { resources: [bridgeTx({ id: 1, amount: 1000, clean_description: 'P1' })], pagination: { next_uri: '/v3/aggregation/transactions?after=x' } },
+      {
+        resources: [
+          bridgeTx({ id: 2, amount: -42.5, clean_description: null, operation_type: 'card' }),
+          bridgeTx({ id: 3, deleted: true }),
+        ],
+        pagination: { next_uri: null },
+      },
+    ])
+    const txs = await new BridgeConnector({ ...config, http }).fetchTransactions()
+    expect(txs).toHaveLength(2) // deleted row on page 2 dropped
+    expect(txs[1]).toMatchObject({ id: '2', amount: -42.5, label: 'RAW WORDING', category: 'card' })
+  })
+
+  it('sends account_id only when configured', async () => {
+    const set = mockHttp([{ resources: [bridgeTx({})] }])
+    await new BridgeConnector({ ...config, http: set.http, accountId: 42 }).fetchTransactions()
+    expect(set.urls[0]).toContain('account_id=42')
+    const unset = mockHttp([{ resources: [bridgeTx({})] }])
+    await new BridgeConnector({ ...config, http: unset.http }).fetchTransactions()
+    expect(unset.urls[0]).not.toContain('account_id=')
+  })
+
+  it('rejects an inverted range and non-positive limits', async () => {
+    const { http } = mockHttp([{ resources: [bridgeTx({})] }])
+    await expect(
+      new BridgeConnector({ ...config, http }).fetchTransactions({ since: '2026-12-31', until: '2026-01-01' }),
+    ).rejects.toThrow(RangeError)
+    expect(() => new BridgeConnector({ ...config, http, maxPages: 0 })).toThrow(RangeError)
+    expect(() => new BridgeConnector({ ...config, http, pageLimit: -5 })).toThrow(RangeError)
+  })
+
+  it('throws on a stalled (repeated) next_uri instead of exhausting the page budget', async () => {
+    const http: HttpClient = async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ resources: [], pagination: { next_uri: '/same?after=stuck' } }),
+      text: async () => '',
+    })
+    await expect(
+      new BridgeConnector({ ...config, http, maxPages: 50 }).fetchTransactions(),
+    ).rejects.toThrow(/stalled/)
+  })
+
   it('feeds aggregation: revenue = credits, expenses = |debits|', async () => {
     const { http } = mockHttp([
       {

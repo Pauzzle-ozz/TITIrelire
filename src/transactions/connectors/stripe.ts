@@ -13,7 +13,7 @@
 import { normalizeAll } from '../normalize.js'
 import type { RawTransaction, Transaction } from '../types.js'
 import { defaultHttpClient, type FetchRange, type HttpClient, type TransactionSource } from './types.js'
-import { assertIsoDate } from './util.js'
+import { assertRange, positiveIntOption } from './util.js'
 
 export interface StripeConfig {
   /** Stripe secret API key (`sk_...`). */
@@ -77,8 +77,8 @@ export class StripeConnector implements TransactionSource {
     this.apiKey = config.apiKey
     this.http = config.http ?? defaultHttpClient()
     this.baseUrl = (config.baseUrl ?? 'https://api.stripe.com/v1').replace(/\/$/, '')
-    this.pageLimit = config.pageLimit ?? 100
-    this.maxPages = config.maxPages ?? 100
+    this.pageLimit = positiveIntOption(config.pageLimit, 100, 'Stripe pageLimit')
+    this.maxPages = positiveIntOption(config.maxPages, 100, 'Stripe maxPages')
     // An empty array means "no filter", not "exclude everything".
     this.includeTypes =
       config.includeTypes && config.includeTypes.length > 0 ? new Set(config.includeTypes) : undefined
@@ -95,8 +95,7 @@ export class StripeConnector implements TransactionSource {
   }
 
   async fetchTransactions(range?: FetchRange): Promise<Transaction[]> {
-    if (range?.since !== undefined) assertIsoDate(range.since, 'since')
-    if (range?.until !== undefined) assertIsoDate(range.until, 'until')
+    assertRange(range)
 
     const raws: RawTransaction[] = []
     let startingAfter: string | undefined

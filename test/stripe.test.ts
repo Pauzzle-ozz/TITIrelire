@@ -145,6 +145,14 @@ describe('StripeConnector', () => {
     ).rejects.toThrow(RangeError)
   })
 
+  it('rejects an inverted range and non-positive limits', async () => {
+    const { http } = mockHttp([{ data: [charge], has_more: false }])
+    await expect(
+      new StripeConnector({ apiKey: 'sk_test', http }).fetchTransactions({ since: '2026-12-31', until: '2026-01-01' }),
+    ).rejects.toThrow(RangeError)
+    expect(() => new StripeConnector({ apiKey: 'sk_test', http, maxPages: 0 })).toThrow(RangeError)
+  })
+
   it('feeds aggregation: revenue counts only customer payments', async () => {
     const { http } = mockHttp([{ data: [charge, refund, payout], has_more: false }])
     const txs = await new StripeConnector({ apiKey: 'sk_test', http }).fetchTransactions()

@@ -13,7 +13,7 @@
 import { normalizeAll } from '../normalize.js'
 import type { RawTransaction, Transaction } from '../types.js'
 import { defaultHttpClient, type FetchRange, type HttpClient, type TransactionSource } from './types.js'
-import { assertIsoDate } from './util.js'
+import { assertRange, positiveIntOption } from './util.js'
 
 export interface BridgeConfig {
   /** Bridge user access token (Bearer). */
@@ -85,8 +85,8 @@ export class BridgeConnector implements TransactionSource {
       'Client-Secret': config.clientSecret,
       'Bridge-Version': config.version ?? '2025-01-15',
     }
-    this.pageLimit = config.pageLimit ?? 500
-    this.maxPages = config.maxPages ?? 100
+    this.pageLimit = positiveIntOption(config.pageLimit, 500, 'Bridge pageLimit')
+    this.maxPages = positiveIntOption(config.maxPages, 100, 'Bridge maxPages')
     this.accountId = config.accountId
     this.keepRaw = config.keepRaw ?? false
   }
@@ -101,12 +101,12 @@ export class BridgeConnector implements TransactionSource {
   }
 
   async fetchTransactions(range?: FetchRange): Promise<Transaction[]> {
-    if (range?.since !== undefined) assertIsoDate(range.since, 'since')
-    if (range?.until !== undefined) assertIsoDate(range.until, 'until')
+    assertRange(range)
 
     const raws: RawTransaction[] = []
     let url = this.buildFirstUrl(range)
     let nextUri: string | null | undefined
+    let lastNextUri: string | undefined
 
     for (let page = 0; page < this.maxPages; page += 1) {
       const response = await this.http(url, { method: 'GET', headers: this.headers })
@@ -133,6 +133,12 @@ export class BridgeConnector implements TransactionSource {
 
       nextUri = list.pagination?.next_uri
       if (!nextUri) break
+      // Guard against a stalled cursor (same next_uri repeated) rather than looping
+      // to the page cap and blaming the wrong thing.
+      if (nextUri === lastNextUri) {
+        throw new Error('Bridge returned a repeated next_uri (stalled pagination)')
+      }
+      lastNextUri = nextUri
       url = `${this.baseUrl}${nextUri}`
     }
 
