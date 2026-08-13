@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TI'TIrelire — simulateur micro-entrepreneur</title>
+    <meta
+      name="description"
+      content="Simulateur transparent et local pour micro-entrepreneurs : cotisations, impôt, et la meilleure option fiscale, expliqués ligne par ligne."
+    />
+    <style>
+      :root {
+        --bg: #faf7f2;
+        --card: #ffffff;
+        --ink: #1f2430;
+        --muted: #5b6472;
+        --line: #e7e1d8;
+        --accent: #c65d3b;
+        --accent-soft: #fbeee7;
+        --good: #2f7d5b;
+        --good-soft: #e7f3ec;
+        --warn: #9a6a00;
+        --warn-soft: #fbf1da;
+        --radius: 14px;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        color: var(--ink);
+        background: var(--bg);
+        line-height: 1.5;
+      }
+      main { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+      header h1 { margin: 0 0 0.15rem; font-size: 1.9rem; letter-spacing: -0.02em; }
+      header p { margin: 0 0 1.75rem; color: var(--muted); }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 1.4rem 1.5rem;
+        margin-bottom: 1.25rem;
+      }
+      h2 { font-size: 1.05rem; margin: 0 0 1rem; }
+      form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem; }
+      .field { display: flex; flex-direction: column; gap: 0.35rem; }
+      .field.full { grid-column: 1 / -1; }
+      label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+      input[type='number'], select {
+        font: inherit; padding: 0.55rem 0.65rem;
+        border: 1px solid var(--line); border-radius: 9px; background: #fff; color: inherit;
+      }
+      input:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+      .check { flex-direction: row; align-items: center; gap: 0.5rem; }
+      .check label { font-weight: 500; color: var(--ink); }
+      .reco { border-left: 4px solid var(--good); background: var(--good-soft); }
+      .reco h2 { color: var(--good); }
+      .reco .net { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; }
+      .reco .sub { color: var(--muted); font-size: 0.9rem; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 0.55rem 0.4rem; border-bottom: 1px solid var(--line); }
+      th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+      td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+      tr.win td { background: var(--good-soft); font-weight: 600; }
+      .badge {
+        display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+        color: var(--good); background: #fff; border: 1px solid var(--good); border-radius: 999px;
+        padding: 0.05rem 0.45rem; margin-left: 0.4rem;
+      }
+      .line { padding: 0.7rem 0; border-bottom: 1px solid var(--line); }
+      .line:last-child { border-bottom: 0; }
+      .line .row { display: flex; justify-content: space-between; gap: 1rem; }
+      .line .label { font-weight: 600; }
+      .line .amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
+      .line .detail { color: var(--muted); font-size: 0.85rem; margin-top: 0.15rem; }
+      .warnings { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+      .warnings li { padding: 0.6rem 0.8rem; border-radius: 9px; font-size: 0.88rem; }
+      .warnings li.warning { background: var(--warn-soft); color: var(--warn); }
+      .warnings li.info { background: #eef1f6; color: var(--muted); }
+      footer { color: var(--muted); font-size: 0.8rem; text-align: center; margin-top: 2rem; }
+      footer a { color: var(--accent); }
+      @media (max-width: 620px) { form { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>TI'TIrelire 🐷</h1>
+        <p>
+          Simulateur micro-entrepreneur — transparent, de la saisie au résultat. Tout est
+          calculé <strong>dans votre navigateur</strong> : aucune donnée n'est envoyée.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Votre situation</h2>
+        <form id="form">
+          <div class="field">
+            <label for="activity">Activité</label>
+            <select id="activity">
+              <option value="vente_marchandises">Vente de marchandises (BIC)</option>
+              <option value="prestations_bic">Prestations de services (BIC)</option>
+              <option value="prestations_bnc" selected>Prestations de services (BNC)</option>
+              <option value="liberal_cipav">Profession libérale (CIPAV)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="revenue">Chiffre d'affaires annuel (€)</label>
+            <input id="revenue" type="number" min="0" step="100" value="40000" />
+          </div>
+          <div class="field">
+            <label for="parts">Parts de quotient familial</label>
+            <input id="parts" type="number" min="1" step="0.5" value="1" />
+          </div>
+          <div class="field">
+            <label for="other">Autres revenus imposables du foyer (€)</label>
+            <input id="other" type="number" min="0" step="100" value="0" />
+          </div>
+          <div class="field check">
+            <input id="acre" type="checkbox" />
+            <label for="acre">Bénéfice de l'ACRE (1re année)</label>
+          </div>
+          <div class="field check">
+            <input id="acreReduced" type="checkbox" />
+            <label for="acreReduced">Création à partir du 01/07/2026 (ACRE 25 %)</label>
+          </div>
+        </form>
+      </section>
+
+      <div id="result" aria-live="polite"></div>
+
+      <footer>
+        Aide à la décision, <strong>pas un conseil fiscal</strong>. Paramètres 2026 —
+        <a href="docs/parameters-2026.md">sources</a>. Projet open source (Apache-2.0).
+      </footer>
+    </main>
+
+    <script type="module" src="/src/ui/main.ts"></script>
+  </body>
+</html>

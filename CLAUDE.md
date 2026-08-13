@@ -133,7 +133,14 @@ Exemple : `feat(wallet): add balance calculation with edge-case handling`
 _Section à enrichir au fil du projet : décisions d'architecture, pièges connus, commandes
 utiles. Tenir à jour — un CLAUDE.md à jour évite de re-présumer (règle 1)._
 
-- **Idée du projet :** _à définir avec le porteur du projet._
-- **Stack :** _à définir._
-- **Commande de test :** _à définir._
-- **Commande de build/run :** _à définir._
+- **Idée du projet :** outil open source de comptabilité / déclaration fiscale / optimisation,
+  « simple et transparent de la saisie au résultat ». **V1** = simulateur micro-entrepreneur
+  (indépendants), local-first.
+- **Stack :** TypeScript (ESM) + [publicodes](https://publi.codes) pour les règles fiscales
+  (transparence native, règles séparées du code) + Vite (UI locale) + Vitest (tests).
+- **Commande de test :** `npm test` (typecheck : `npm run typecheck`).
+- **Commande de build/run :** `npm run dev` (app locale) · `npm run build` (statique → `dist/`).
+- **Repères code :** moteur `src/engine/` (règles `rules.ts`, `simulate.ts`, `compare.ts`),
+  UI `src/ui/`, paramètres sourcés `docs/parameters-2026.md`.
+- **Piège fiscal :** les paramètres (taux, plafonds, barème) sont datés **2026** et changent à
+  chaque loi de finances — les mettre à jour dans `rules.ts` + `docs/parameters-2026.md`.
