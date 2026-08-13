@@ -33,4 +33,9 @@ describe('impotMarginal', () => {
     expect(impotMarginal(0, 14500, 1)).toBe(319)
     expect(impotMarginal(100000, 47550, 1)).toBe(19495.5)
   })
+
+  it('applies the quotient familial with parts > 1', () => {
+    expect(impotMarginal(40000, 40000, 2)).toBe(8359.98)
+    expect(impotMarginal(40000, 40000, 2)).toBe(impotBareme(80000, 2) - impotBareme(40000, 2))
+  })
 })

@@ -120,6 +120,7 @@ figure varies slightly across sources (14 171–14 556 €) and rarely binds; it
 | IS normal rate | **25 %** |
 | PFU (flat tax) on dividends | **30 %** = 12,8 % IR + 17,2 % prélèvements sociaux |
 | Dividend allowance (barème option) | **40 %** |
+| CSG déductible (barème option) | **6,8 %** of the gross dividend |
 
 ⚠️ **2026 caveat:** several sources report prélèvements sociaux rising to **18,6 %** (PFU
 **31,4 %**) in 2026. This model keeps the well-established **17,2 %** and surfaces the caveat;

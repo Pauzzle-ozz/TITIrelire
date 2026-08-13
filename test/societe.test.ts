@@ -32,23 +32,55 @@ describe('simulateSociete — IS then dividend (PFU)', () => {
     const r = simulateSociete({ benefice: 100000, dividendes: 90000 })
     expect(r.warnings.some((w) => w.code === 'dividende_superieur_resultat')).toBe(true)
   })
+
+  it('applies the full 25 % IS when the reduced rate is not eligible', () => {
+    const r = simulateSociete({ benefice: 100000, reducedRateEligible: false })
+    expect(r.is.amount).toBe(25000)
+    expect(r.resultatNet).toBe(75000)
+    expect(r.dividende).toBe(75000)
+    expect(r.pfu.amount).toBe(22500)
+    expect(r.netDividende).toBe(52500)
+    expect(r.warnings.some((w) => w.code === 'is_taux_reduit_conditions')).toBe(false)
+  })
 })
 
-describe('compareDividendes — PFU vs barème', () => {
+describe('compareDividendes — PFU vs barème (with CSG déductible)', () => {
   it('prefers the barème at a low marginal rate', () => {
     const c = compareDividendes({ benefice: 100000 }) // no other income
     expect(c.recommended).toBe('bareme')
     expect(c.netPfu).toBe(55475)
-    expect(c.netBareme).toBe(58250.01)
-    expect(c.netGain).toBe(2775.01)
+    expect(c.netBareme).toBe(59866.71) // 40 % allowance − 6,8 % CSG déductible
+    expect(c.netGain).toBe(4391.71)
   })
 
   it('prefers the PFU at a high marginal rate', () => {
     const c = compareDividendes({ benefice: 100000, autresRevenus: 100000 })
     expect(c.recommended).toBe('pfu')
     expect(c.netPfu).toBe(55475)
-    expect(c.netBareme).toBe(46123.5)
-    expect(c.netGain).toBe(9351.5)
+    expect(c.netBareme).toBe(48332.99)
+    expect(c.netGain).toBe(7142.01)
+  })
+
+  it('ties at zero dividend and defaults to the PFU', () => {
+    const c = compareDividendes({ benefice: 100000, dividendes: 0 })
+    expect(c.netPfu).toBe(0)
+    expect(c.netBareme).toBe(0)
+    expect(c.netGain).toBe(0)
+    expect(c.recommended).toBe('pfu')
+    expect(c.explanation).toContain('même net')
+  })
+
+  it('applies the quotient familial in the barème option (parts > 1)', () => {
+    const c = compareDividendes({ benefice: 100000, autresRevenus: 100000, parts: 2 })
+    expect(c.netPfu).toBe(55475)
+    expect(c.netBareme).toBe(52970.7)
+    expect(c.recommended).toBe('pfu')
+    expect(c.netGain).toBe(2504.3)
+  })
+
+  it('surfaces the CSG-déductible approximation caveat', () => {
+    const c = compareDividendes({ benefice: 100000 })
+    expect(c.warnings.some((w) => w.code === 'csg_deductible_approx')).toBe(true)
   })
 
   it('recommended net is always the higher of the two', () => {

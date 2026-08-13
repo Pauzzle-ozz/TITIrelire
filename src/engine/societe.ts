@@ -19,6 +19,7 @@ const PFU_IR = 0.128
 const PFU_PS = 0.172
 const PFU_TOTAL = PFU_IR + PFU_PS // 0.30
 const DIVIDEND_ABATTEMENT = 0.4
+const CSG_DEDUCTIBLE = 0.068 // part of the 17,2 % PS deductible from taxable income (barème option)
 
 function eur(amount: number): string {
   return `${round2(amount).toString().replace('.', ',')} €`
@@ -178,10 +179,14 @@ export function compareDividendes(raw: SocieteInput): DividendComparison {
   const base = simulateSociete(raw)
   const dividende = base.dividende
 
-  const netPfu = round2(dividende - dividende * PFU_TOTAL)
+  // Reuse the same net as simulateSociete so the two never disagree by a rounding cent.
+  const netPfu = base.netDividende
 
   const ps = round2(dividende * PFU_PS)
-  const baseImposable = round2(dividende * (1 - DIVIDEND_ABATTEMENT)) // 40 % allowance
+  // 40 % allowance, less the 6,8 % CSG déductible (approximation: technically deductible the
+  // following year — surfaced as an info warning).
+  const csgDeductible = round2(dividende * CSG_DEDUCTIBLE)
+  const baseImposable = round2(dividende * (1 - DIVIDEND_ABATTEMENT) - csgDeductible)
   const irBareme = impotMarginal(base.input.autresRevenus, baseImposable, base.input.parts)
   const netBareme = round2(dividende - ps - irBareme)
 
@@ -205,6 +210,15 @@ export function compareDividendes(raw: SocieteInput): DividendComparison {
     recommended,
     netGain,
     explanation,
-    warnings: base.warnings,
+    warnings: [
+      ...base.warnings,
+      {
+        code: 'csg_deductible_approx',
+        level: 'info',
+        message:
+          'Option barème : la CSG déductible (6,8 % du dividende) est appliquée l’année même ' +
+          'par simplification ; elle est en réalité déductible du revenu de l’année suivante.',
+      },
+    ],
   }
 }

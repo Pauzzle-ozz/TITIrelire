@@ -6,7 +6,7 @@
  * Out of scope (like the micro module): décote, plafonnement du quotient familial,
  * specific credits/réductions.
  */
-import { impotBareme, round2 } from './bareme.js'
+import { impotMarginal, round2 } from './bareme.js'
 import type { LineItem, Warning } from './types.js'
 
 /** 2026 parameters for salaried income tax. */
@@ -61,10 +61,6 @@ function eur(amount: number): string {
   return `${round2(amount).toString().replace('.', ',')} €`
 }
 
-function pct(ratio: number): string {
-  return `${(Math.round(ratio * 10000) / 100).toString().replace('.', ',')} %`
-}
-
 export function normalizeParticulier(raw: ParticulierInput): ParticulierInputNormalized {
   if (!Number.isFinite(raw.salaireNetImposable) || raw.salaireNetImposable < 0) {
     throw new RangeError('salaireNetImposable must be a finite number >= 0')
@@ -99,7 +95,9 @@ export function simulateParticulier(raw: ParticulierInput): ParticulierResult {
 
   const forfait = Math.min(Math.max(salaire * ABATTEMENT_TAUX, ABATTEMENT_MIN), ABATTEMENT_PLAFOND)
   const usesFraisReels = input.fraisReels !== undefined
-  const abattementAmount = Math.min(usesFraisReels ? input.fraisReels! : forfait, salaire)
+  const declaredDeduction = usesFraisReels ? input.fraisReels! : forfait
+  const abattementAmount = Math.min(declaredDeduction, salaire) // cannot deduct more than the salary
+  const fraisReelsCapped = usesFraisReels && input.fraisReels! > salaire
   const abattement: LineItem = {
     key: 'abattement',
     label: usesFraisReels ? 'Frais réels' : 'Déduction forfaitaire de 10 %',
@@ -107,15 +105,18 @@ export function simulateParticulier(raw: ParticulierInput): ParticulierResult {
     base: salaire,
     ...(usesFraisReels ? {} : { rate: ABATTEMENT_TAUX }),
     detail: usesFraisReels
-      ? `Frais réels déclarés : ${eur(abattementAmount)}`
+      ? `Frais réels déclarés : ${eur(input.fraisReels!)}${fraisReelsCapped ? ` (plafonnés au salaire ${eur(salaire)})` : ''}`
       : `10 % de ${eur(salaire)} (min ${eur(ABATTEMENT_MIN)}, plafond ${eur(ABATTEMENT_PLAFOND)})`,
   }
 
   const taxableSalary = round2(salaire - abattementAmount)
   const plafond = perPlafond(taxableSalary)
   const perDeductible = round2(Math.min(input.perContribution, plafond))
-  const taxableIncome = round2(Math.max(0, input.autresRevenus + taxableSalary - perDeductible))
-  const incomeTax = impotBareme(taxableIncome, input.parts)
+  const salaryTaxable = round2(Math.max(0, taxableSalary - perDeductible))
+  const taxableIncome = round2(input.autresRevenus + salaryTaxable)
+  // Marginal income tax attributable to the salary given the household's other income, so
+  // netAfterTax stays meaningful even when the other income dominates.
+  const incomeTax = impotMarginal(input.autresRevenus, salaryTaxable, input.parts)
   const netAfterTax = round2(salaire - incomeTax)
   const effectiveRate = salaire > 0 ? Math.round((incomeTax / salaire) * 10000) / 10000 : 0
 
@@ -133,7 +134,7 @@ export function simulateParticulier(raw: ParticulierInput): ParticulierResult {
     label: 'Impôt sur le revenu',
     amount: incomeTax,
     base: taxableIncome,
-    detail: `Barème progressif 2026 sur ${eur(taxableIncome)} (${input.parts} part(s))`,
+    detail: `Barème progressif 2026 — part du salaire (revenu imposable du foyer ${eur(taxableIncome)}, ${input.parts} part(s))`,
   })
 
   const warnings: Warning[] = []
@@ -142,6 +143,13 @@ export function simulateParticulier(raw: ParticulierInput): ParticulierResult {
       code: 'per_plafond_depasse',
       level: 'warning',
       message: `Le versement PER (${eur(input.perContribution)}) dépasse le plafond déductible (${eur(plafond)}) ; l'excédent n'est pas déduit.`,
+    })
+  }
+  if (fraisReelsCapped) {
+    warnings.push({
+      code: 'frais_reels_plafonnes',
+      level: 'warning',
+      message: `Les frais réels déclarés (${eur(input.fraisReels!)}) dépassent le salaire ; la déduction est plafonnée à ${eur(salaire)}.`,
     })
   }
 

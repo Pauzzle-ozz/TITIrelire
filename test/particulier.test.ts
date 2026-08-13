@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { comparePER, simulateParticulier } from '../src/index.js'
+import { comparePER, perPlafond, simulateParticulier } from '../src/index.js'
 
 describe('simulateParticulier — income tax on salary', () => {
   it('applies the 10 % deduction then the scale (salary 40 000 €)', () => {
@@ -42,6 +42,51 @@ describe('simulateParticulier — income tax on salary', () => {
   it('rejects invalid input', () => {
     expect(() => simulateParticulier({ salaireNetImposable: -1 })).toThrow(RangeError)
     expect(() => simulateParticulier({ salaireNetImposable: 1000, parts: 0 })).toThrow(RangeError)
+  })
+
+  it('reaches the 41 %/45 % bands on a high salary', () => {
+    const r = simulateParticulier({ salaireNetImposable: 300000 })
+    expect(r.taxableSalary).toBe(285444)
+    expect(r.incomeTax).toBe(104973.64)
+    expect(r.netAfterTax).toBe(195026.36)
+    expect(r.effectiveRate).toBe(0.3499)
+  })
+
+  it('caps frais réels at the salary and warns', () => {
+    const r = simulateParticulier({ salaireNetImposable: 40000, fraisReels: 50000 })
+    expect(r.abattement.amount).toBe(40000)
+    expect(r.taxableSalary).toBe(0)
+    expect(r.incomeTax).toBe(0)
+    expect(r.abattement.detail).toContain('50000') // reports the declared amount
+    expect(r.warnings.some((w) => w.code === 'frais_reels_plafonnes')).toBe(true)
+  })
+
+  it('caps the PER deduction at the 37 680 € ceiling on a high salary', () => {
+    const r = simulateParticulier({ salaireNetImposable: 500000, perContribution: 45000 })
+    expect(r.perDeductible).toBe(37680)
+    expect(r.warnings.some((w) => w.code === 'per_plafond_depasse')).toBe(true)
+  })
+
+  it('scales other household income on top of the salary (marginal tax)', () => {
+    const r = simulateParticulier({ salaireNetImposable: 40000, autresRevenus: 30000 })
+    expect(r.taxableIncome).toBe(66000)
+    expect(r.incomeTax).toBe(10800) // marginal: IR(66 000) − IR(30 000)
+    expect(r.netAfterTax).toBe(29200)
+  })
+
+  it('applies the quotient familial (parts > 1 lowers the tax)', () => {
+    const r = simulateParticulier({ salaireNetImposable: 80000, parts: 2 })
+    expect(r.taxableSalary).toBe(72000)
+    expect(r.incomeTax).toBe(7807.98)
+    expect(r.incomeTax).toBeLessThan(simulateParticulier({ salaireNetImposable: 80000 }).incomeTax)
+  })
+})
+
+describe('perPlafond', () => {
+  it('clamps 10 % of the taxable salary between the floor and ceiling', () => {
+    expect(perPlafond(500000)).toBe(37680) // ceiling
+    expect(perPlafond(20000)).toBe(4710) // floor
+    expect(perPlafond(100000)).toBe(10000) // 10 %
   })
 })
 
