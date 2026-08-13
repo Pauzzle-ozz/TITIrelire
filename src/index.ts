@@ -73,3 +73,5 @@ export { BridgeConnector } from './transactions/connectors/bridge.js'
 
 export type { CsvMapping, CsvOptions, CsvPreset } from './transactions/import/csv.js'
 export { importCsv, importCsvWithPreset, CSV_PRESETS } from './transactions/import/csv.js'
+
+export { parseFacturX, importFacturX } from './transactions/import/facturx.js'
