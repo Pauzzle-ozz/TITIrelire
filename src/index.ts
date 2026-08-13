@@ -12,3 +12,16 @@ export const NAME = "TI'TIrelire" as const
 
 /** Library version, kept in sync with package.json. */
 export const VERSION = '0.1.0' as const
+
+export type {
+  ActivityType,
+  IncomeTaxMode,
+  LineItem,
+  NormalizedInput,
+  SimulationInput,
+  SimulationResult,
+  Warning,
+  WarningLevel,
+} from './engine/types.js'
+
+export { normalize, simulate } from './engine/simulate.js'
