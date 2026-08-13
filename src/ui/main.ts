@@ -2,7 +2,10 @@
  * UI wiring: reads the form, runs the comparison in the browser, and renders the
  * transparent result. No network, no storage — everything stays on the device.
  */
-import { compare, type ActivityType, type CompareInput } from '../index.js'
+// Import the engine directly (not the top-level barrel) so the browser bundle's module
+// graph never references the connectors — secret-handling code cannot ship to the client.
+import { compare, type CompareInput } from '../engine/compare.js'
+import type { ActivityType } from '../engine/types.js'
 import { toViewModel, type ViewModel } from './view-model.js'
 
 function el<T extends HTMLElement>(id: string): T {

@@ -45,3 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Completed `escape()` (single quote), capitalized the recommendation title, clarified the
   CFP artisanal assumption inline, and corrected README/docs over-claims (library import,
   per-figure sourcing, VAT tolerance column).
+- Data layer (adversarial review): CSV ids are now derived from content + occurrence
+  (stable across re-imports, genuine duplicates preserved); delimiter detection is
+  quote-aware; `parseDate` requires a 4-digit year and exactly three parts; date validation
+  rejects impossible calendar days (e.g. 2026-02-31); `aggregateTurnover` matches currencies
+  case-insensitively and treats a zero amount as income; the Stripe connector throws instead
+  of silently truncating at the page cap, validates the fetch range, treats `includeTypes: []`
+  as no filter, and bounds error bodies.
+- Privacy/boundary hardening: raw provider payloads are opt-in (`keepRaw`, default off); the
+  UI imports the engine directly so connectors can never enter the browser bundle (guarded by
+  a test); low-level CSV parser helpers are no longer part of the public API.

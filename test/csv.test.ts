@@ -1,14 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  CSV_PRESETS,
-  importCsv,
-  importCsvWithPreset,
-  parseAmount,
-  parseCsv,
-  parseDate,
-  simulateFromTransactions,
-} from '../src/index.js'
+import { CSV_PRESETS, importCsv, importCsvWithPreset, simulateFromTransactions } from '../src/index.js'
+// Low-level helpers are internal to the CSV module (not the public barrel).
+import { parseAmount, parseCsv, parseDate } from '../src/transactions/import/csv.js'
 
 describe('parseCsv', () => {
   it('handles quoted fields, escaped quotes and embedded delimiters', () => {
@@ -119,6 +113,92 @@ describe('importCsvWithPreset', () => {
 
   it('rejects an unknown preset', () => {
     expect(() => importCsvWithPreset('a\n1', 'sap')).toThrow(RangeError)
+  })
+})
+
+describe('parseAmount — single-separator ambiguity contract', () => {
+  it('treats a lone comma as a decimal by default', () => {
+    expect(parseAmount('1,234')).toBe(1.234)
+    expect(parseAmount('1,200')).toBe(1.2)
+  })
+  it('honors an explicit decimal to resolve thousands', () => {
+    expect(parseAmount('1,234', '.')).toBe(1234) // comma = thousands
+    expect(parseAmount('1,234', ',')).toBe(1.234) // comma = decimal
+  })
+})
+
+describe('parseDate — validation', () => {
+  it('returns the raw value for a 2-digit year (so normalize rejects it)', () => {
+    expect(parseDate('04/03/26', 'dd/mm/yyyy')).toBe('04/03/26')
+  })
+  it('returns the raw value when there are not exactly 3 parts', () => {
+    expect(parseDate('2026-03-04-extra', 'dd/mm/yyyy')).toBe('2026-03-04-extra')
+  })
+  it('makes importCsv reject a 2-digit-year file', () => {
+    expect(() =>
+      importCsv('date,amount\n04/03/26,10', { date: 'date', amount: 'amount' }, { dateFormat: 'dd/mm/yyyy' }),
+    ).toThrow(RangeError)
+  })
+})
+
+describe('delimiter detection is quote-aware', () => {
+  it('does not miscount separators inside a quoted header field', () => {
+    // A genuine semicolon file whose first column name contains commas.
+    const rows = parseCsv('"a,b,c";"d"\n"x";"y"')
+    expect(rows).toEqual([
+      ['a,b,c', 'd'],
+      ['x', 'y'],
+    ])
+  })
+})
+
+describe('importCsv — ids and de-duplication', () => {
+  it('keeps two genuinely identical rows as distinct transactions', () => {
+    const csv = 'date,amount,label\n2026-01-10,10,Café\n2026-01-10,10,Café'
+    const txs = importCsv(csv, { date: 'date', amount: 'amount', label: 'label' })
+    expect(txs).toHaveLength(2)
+    expect(txs[0]!.id).not.toBe(txs[1]!.id)
+  })
+
+  it('derives ids that do not shift when an unrelated earlier row is added', () => {
+    const base = importCsv('date,amount,label\n2026-01-10,10,Café', {
+      date: 'date',
+      amount: 'amount',
+      label: 'label',
+    })
+    const withPrior = importCsv('date,amount,label\n2026-01-01,99,Autre\n2026-01-10,10,Café', {
+      date: 'date',
+      amount: 'amount',
+      label: 'label',
+    })
+    expect(withPrior[1]!.id).toBe(base[0]!.id) // stable across inserts
+  })
+
+  it('collapses duplicate ids from a mapped id column (first wins)', () => {
+    const csv = 'id,date,amount\nx,2026-01-10,10\nx,2026-02-10,999'
+    const txs = importCsv(csv, { id: 'id', date: 'date', amount: 'amount' })
+    expect(txs).toHaveLength(1)
+    expect(txs[0]!.amount).toBe(10)
+  })
+})
+
+describe('importCsv — raw retention and debit sign', () => {
+  it('omits raw by default and keeps it only when asked', () => {
+    const csv = 'date,amount\n2026-01-10,10'
+    const m = { date: 'date', amount: 'amount' }
+    expect(importCsv(csv, m)[0]!.raw).toBeUndefined()
+    expect(importCsv(csv, m, { keepRaw: true })[0]!.raw).toEqual(['2026-01-10', '10'])
+  })
+
+  it('treats a signed debit column as a magnitude (no double negative)', () => {
+    const csv = 'Date;Débit;Crédit\n10/01/2026;-50,00;\n11/01/2026;;100,00'
+    const txs = importCsv(
+      csv,
+      { date: 'Date', debit: 'Débit', credit: 'Crédit' },
+      { dateFormat: 'dd/mm/yyyy', decimal: ',' },
+    )
+    expect(txs[0]!.amount).toBe(-50) // -(|−50|) = −50, not +50
+    expect(txs[1]!.amount).toBe(100)
   })
 })
 

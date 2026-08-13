@@ -70,11 +70,4 @@ export type { StripeConfig } from './transactions/connectors/stripe.js'
 export { StripeConnector } from './transactions/connectors/stripe.js'
 
 export type { CsvMapping, CsvOptions, CsvPreset } from './transactions/import/csv.js'
-export {
-  importCsv,
-  importCsvWithPreset,
-  parseCsv,
-  parseAmount,
-  parseDate,
-  CSV_PRESETS,
-} from './transactions/import/csv.js'
+export { importCsv, importCsvWithPreset, CSV_PRESETS } from './transactions/import/csv.js'

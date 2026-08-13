@@ -34,10 +34,17 @@ export function normalizeTransaction(raw: RawTransaction): Transaction {
   if (!ISO_DATE.test(rawDate)) {
     throw new RangeError(`Transaction date must be ISO YYYY-MM-DD, got: ${String(raw.date)}`)
   }
+  const year = Number(rawDate.slice(0, 4))
   const month = Number(rawDate.slice(5, 7))
   const day = Number(rawDate.slice(8, 10))
-  if (month < 1 || month > 12 || day < 1 || day > 31) {
+  if (month < 1 || month > 12 || day < 1) {
     throw new RangeError(`Transaction date is out of range: ${rawDate}`)
+  }
+  // Reject impossible calendar days (e.g. 2026-02-31, 2025-02-29). Day 0 of the next
+  // month resolves to the last day of `month`.
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate()
+  if (day > daysInMonth) {
+    throw new RangeError(`Transaction date is not a real calendar day: ${rawDate}`)
   }
 
   const amount = coerceAmount(raw.amount)
@@ -53,8 +60,12 @@ export function normalizeTransaction(raw: RawTransaction): Transaction {
     amount: round2(amount),
     currency,
     label: typeof raw.label === 'string' ? raw.label.trim() : '',
-    ...(raw.counterparty !== undefined ? { counterparty: raw.counterparty } : {}),
-    ...(raw.category !== undefined ? { category: raw.category } : {}),
+    ...(typeof raw.counterparty === 'string' && raw.counterparty.trim() !== ''
+      ? { counterparty: raw.counterparty.trim() }
+      : {}),
+    ...(typeof raw.category === 'string' && raw.category.trim() !== ''
+      ? { category: raw.category.trim() }
+      : {}),
     source: typeof raw.source === 'string' && raw.source.trim() !== '' ? raw.source.trim() : 'unknown',
     ...(raw.raw !== undefined ? { raw: raw.raw } : {}),
   }

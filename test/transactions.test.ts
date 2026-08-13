@@ -102,6 +102,49 @@ describe('aggregateTurnover', () => {
   })
 })
 
+describe('normalizeTransaction — real calendar days', () => {
+  it.each(['2026-02-30', '2026-02-31', '2026-04-31', '2026-06-31', '2025-02-29'])(
+    'rejects impossible day %s',
+    (date) => {
+      expect(() => normalizeTransaction({ id: '1', date, amount: 1 })).toThrow(RangeError)
+    },
+  )
+  it('accepts a valid leap day', () => {
+    expect(normalizeTransaction({ id: '1', date: '2028-02-29', amount: 1 }).date).toBe('2028-02-29')
+  })
+})
+
+describe('aggregateTurnover — numeric robustness', () => {
+  it('rounds away float accumulation error over many small amounts', () => {
+    const cents = Array.from({ length: 10 }, (_, i) =>
+      tx({ id: `c${i}`, date: '2026-01-01', amount: 0.1 }),
+    )
+    // Naive sum of ten 0.1 is 0.9999999999999999; the final round fixes it.
+    expect(aggregateTurnover(cents, { year: 2026 }).revenue).toBe(1)
+  })
+
+  it('counts a zero-amount transaction as income (consistent with direction())', () => {
+    const s = aggregateTurnover([tx({ id: 'z', amount: 0 }), tx({ id: 'p', amount: 100 })])
+    expect(s.incomeCount).toBe(2)
+    expect(s.revenue).toBe(100)
+  })
+
+  it('matches currencies case-insensitively', () => {
+    // Bypass normalize (which uppercases) to exercise aggregate's own comparison.
+    const lower: Transaction = {
+      id: 'l',
+      date: '2026-01-01',
+      amount: 1000,
+      currency: 'eur',
+      label: '',
+      source: 'test',
+    }
+    const s = aggregateTurnover([lower], { currency: 'EUR' })
+    expect(s.revenue).toBe(1000)
+    expect(s.ignoredCurrencies).toEqual([])
+  })
+})
+
 describe('simulate/compare from transactions', () => {
   const transactions = normalizeAll([
     { id: '1', date: '2026-01-10', amount: 20000, source: 'stripe' },

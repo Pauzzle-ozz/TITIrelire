@@ -33,12 +33,14 @@ export function aggregateTurnover(
 
   for (const tx of transactions) {
     if (year !== undefined && Number(tx.date.slice(0, 4)) !== year) continue
-    if (tx.currency !== currency) {
-      ignored.add(tx.currency)
+    const txCurrency = tx.currency.toUpperCase()
+    if (txCurrency !== currency) {
+      ignored.add(txCurrency)
       continue
     }
     transactionCount += 1
-    if (tx.amount > 0) {
+    // A zero amount counts as income, consistent with direction() (amount >= 0).
+    if (tx.amount >= 0) {
       revenue += tx.amount
       incomeCount += 1
     } else {

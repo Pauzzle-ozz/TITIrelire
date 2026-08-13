@@ -29,7 +29,11 @@ export interface Transaction {
   category?: string
   /** Origin of the record (e.g. `stripe`, `csv`, `bank`). */
   source: string
-  /** Original provider record, kept for auditability/transparency. */
+  /**
+   * Original provider record, kept for auditability. Opt-in only (importers/connectors
+   * omit it by default) since it holds the untrimmed upstream payload — strip it before
+   * sharing/exporting transactions (data minimization).
+   */
   raw?: unknown
 }
 
@@ -54,7 +58,7 @@ export interface AggregateOptions {
 
 /** Result of aggregating transactions into a turnover figure. */
 export interface TurnoverSummary {
-  /** Sum of income (amount > 0), rounded to the cent — feeds the tax engine as `revenue`. */
+  /** Sum of income (amount >= 0), rounded to the cent — feeds the tax engine as `revenue`. */
   revenue: number
   /** Sum of the absolute value of expenses (amount < 0), rounded to the cent. */
   expenses: number

@@ -104,6 +104,47 @@ describe('StripeConnector', () => {
     )
   })
 
+  it('throws instead of silently truncating when the page cap is hit', async () => {
+    // Always report more pages available.
+    let n = 0
+    const http: HttpClient = async () => {
+      n += 1
+      const body = { data: [{ ...charge, id: `ch_${n}` }], has_more: true }
+      return { ok: true, status: 200, json: async () => body, text: async () => '' }
+    }
+    await expect(
+      new StripeConnector({ apiKey: 'sk_test', http, maxPages: 3 }).fetchTransactions(),
+    ).rejects.toThrow(/maxPages=3/)
+  })
+
+  it('paginates using the raw last id even when it is filtered out', async () => {
+    const charge2 = { ...charge, id: 'ch_2' }
+    const { http, urls } = mockHttp([
+      { data: [charge, payout], has_more: true }, // last item (payout) is filtered
+      { data: [charge2], has_more: false },
+    ])
+    const txs = await new StripeConnector({
+      apiKey: 'sk_test',
+      http,
+      includeTypes: ['charge'],
+    }).fetchTransactions()
+    expect(txs.map((t) => t.id)).toEqual(['ch_1', 'ch_2'])
+    expect(urls[1]).toContain('starting_after=po_1') // cursor = filtered payout id
+  })
+
+  it('treats includeTypes: [] as no filter', async () => {
+    const { http } = mockHttp([{ data: [charge, refund, payout], has_more: false }])
+    const txs = await new StripeConnector({ apiKey: 'sk_test', http, includeTypes: [] }).fetchTransactions()
+    expect(txs).toHaveLength(3)
+  })
+
+  it('rejects an invalid FetchRange date locally', async () => {
+    const { http } = mockHttp([{ data: [charge], has_more: false }])
+    await expect(
+      new StripeConnector({ apiKey: 'sk_test', http }).fetchTransactions({ since: 'not-a-date' }),
+    ).rejects.toThrow(RangeError)
+  })
+
   it('feeds aggregation: revenue counts only customer payments', async () => {
     const { http } = mockHttp([{ data: [charge, refund, payout], has_more: false }])
     const txs = await new StripeConnector({ apiKey: 'sk_test', http }).fetchTransactions()
