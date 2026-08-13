@@ -59,6 +59,16 @@ export {
   compareFromTransactions,
 } from './transactions/from-transactions.js'
 
+export type {
+  FetchRange,
+  HttpClient,
+  HttpResponse,
+  TransactionSource,
+} from './transactions/connectors/types.js'
+export { defaultHttpClient } from './transactions/connectors/types.js'
+export type { StripeConfig } from './transactions/connectors/stripe.js'
+export { StripeConnector } from './transactions/connectors/stripe.js'
+
 export type { CsvMapping, CsvOptions, CsvPreset } from './transactions/import/csv.js'
 export {
   importCsv,
