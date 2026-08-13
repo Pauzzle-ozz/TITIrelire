@@ -23,6 +23,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sourced parameter reference in `docs/parameters-2026.md`.
 - 50 unit tests covering the engine, comparator, view-model and UI wiring.
 
+- **Data connection layer** (`src/transactions`): a canonical `Transaction` model with
+  validation/de-dup, `aggregateTurnover()` (transactions → CA), and
+  `simulateFromTransactions()` / `compareFromTransactions()` chaining straight into the
+  engine.
+- **Universal CSV importer** with a robust parser (quoted fields, `,`/`;`/tab, FR/EN
+  amounts, multiple date formats), column mapping (single amount or debit/credit) and
+  presets (generic, Stripe, Qonto).
+- **Stripe connector** as the reference live-API `TransactionSource` (cursor pagination,
+  injectable HTTP, runs server-side/self-hosted).
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md): design principles, the local-first vs
+  live-connectors stance, and the roadmap for both workstreams (fiscal coverage + data
+  connection).
+
 ### Fixed
 - Breakdown `detail` strings and `LineItem.rate` now use true ratios: publicodes returns
   rates in percent units, so explanations previously showed rates ×100 (e.g. "1230 %"). The

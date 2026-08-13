@@ -61,6 +61,25 @@ const advice = compare({ activity: 'prestations_bnc', revenue: 40000 })
 console.log(advice.recommended, advice.netGain, advice.explanation)
 ```
 
+## Connecting your data (early)
+
+To avoid retyping your turnover, TI'TIrelire can ingest your transactions and compute the
+CA for you. It normalizes any source into one canonical `Transaction` model, then feeds the
+engine:
+
+```ts
+import { importCsvWithPreset, compareFromTransactions } from './src/index.js'
+
+const txs = importCsvWithPreset(csvText, 'stripe') // or 'qonto', 'generic', a custom mapping
+const { summary, comparison } = compareFromTransactions(txs, { activity: 'prestations_bnc', year: 2026 })
+console.log(summary.revenue, comparison.recommended)
+```
+
+- **File import** (CSV/exports) runs locally, no secrets — works with almost any tool.
+- **Live connectors** (e.g. Stripe) use API secrets, so they run **server-side / self-hosted**,
+  never in the browser. See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the design and the
+  full roadmap (more connectors, bank/DSP2, Factur-X, and broader fiscal profiles).
+
 ## Development
 
 This project follows a strict, test-first workflow. If you use an AI agent (e.g. Claude
