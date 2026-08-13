@@ -339,6 +339,16 @@ export const CSV_PRESETS: Record<string, CsvPreset> = {
     mapping: { date: 'Date', label: 'Libellé', debit: 'Débit', credit: 'Crédit' },
     options: { source: 'bank', dateFormat: 'dd/mm/yyyy', decimal: ',' },
   },
+  // Shopify orders export ("Created at" is a datetime; "Total" is the order total).
+  shopify: {
+    mapping: { id: 'Name', date: 'Created at', amount: 'Total', currency: 'Currency', label: 'Name' },
+    options: { source: 'shopify', decimal: '.' },
+  },
+  // SumUp transactions export (best-effort; override the mapping to match your report).
+  sumup: {
+    mapping: { id: 'Transaction ID', date: 'Date', amount: 'Amount', currency: 'Currency' },
+    options: { source: 'sumup' },
+  },
 }
 
 /** Imports CSV using a named preset, with optional mapping/option overrides. */

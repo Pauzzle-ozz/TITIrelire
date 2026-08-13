@@ -142,6 +142,18 @@ describe('importCsvWithPreset', () => {
     expect(txs[0]).toMatchObject({ amount: 1200, label: 'Vente' })
   })
 
+  it('imports a Shopify orders export', () => {
+    const csv = ['Name,Created at,Total,Currency', '#1001,2026-01-10 12:00:00 +0100,120.00,EUR'].join('\n')
+    const txs = importCsvWithPreset(csv, 'shopify')
+    expect(txs[0]).toMatchObject({ id: '#1001', date: '2026-01-10', amount: 120, currency: 'EUR', source: 'shopify' })
+  })
+
+  it('imports a SumUp transactions export', () => {
+    const csv = ['Transaction ID,Date,Amount,Currency', 'TX9,2026-01-10,45.50,EUR'].join('\n')
+    const txs = importCsvWithPreset(csv, 'sumup')
+    expect(txs[0]).toMatchObject({ id: 'TX9', amount: 45.5, currency: 'EUR', source: 'sumup' })
+  })
+
   it('handles bank_fr edge amounts via the preset path', () => {
     const csv = [
       'Date;Libellé;Débit;Crédit',
