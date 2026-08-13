@@ -33,3 +33,28 @@ export type {
 } from './engine/compare.js'
 
 export { compare } from './engine/compare.js'
+
+// ── Data connection layer ─────────────────────────────────────────────────────
+export type {
+  Transaction,
+  RawTransaction,
+  TransactionDirection,
+  AggregateOptions,
+  TurnoverSummary,
+} from './transactions/types.js'
+
+export { direction } from './transactions/types.js'
+export { normalizeTransaction, normalizeAll } from './transactions/normalize.js'
+export { aggregateTurnover } from './transactions/aggregate.js'
+
+export type {
+  SimulateFromTransactionsOptions,
+  CompareFromTransactionsOptions,
+  SimulateFromTransactionsResult,
+  CompareFromTransactionsResult,
+} from './transactions/from-transactions.js'
+
+export {
+  simulateFromTransactions,
+  compareFromTransactions,
+} from './transactions/from-transactions.js'
