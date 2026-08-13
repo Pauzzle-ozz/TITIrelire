@@ -34,6 +34,37 @@ export type {
 
 export { compare } from './engine/compare.js'
 
+// ── Additional fiscal profiles ────────────────────────────────────────────────
+export type { TaxBracket } from './engine/bareme.js'
+export { BAREME_IR_2026, impotBareme, impotMarginal } from './engine/bareme.js'
+
+export type {
+  ParticulierInput,
+  ParticulierInputNormalized,
+  ParticulierResult,
+  PerComparison,
+} from './engine/particulier.js'
+export {
+  simulateParticulier,
+  comparePER,
+  normalizeParticulier,
+  perPlafond,
+} from './engine/particulier.js'
+
+export type {
+  SocieteInput,
+  SocieteInputNormalized,
+  SocieteResult,
+  DividendMode,
+  DividendComparison,
+} from './engine/societe.js'
+export {
+  impotSocietes,
+  simulateSociete,
+  compareDividendes,
+  normalizeSociete,
+} from './engine/societe.js'
+
 // ── Data connection layer ─────────────────────────────────────────────────────
 export type {
   Transaction,

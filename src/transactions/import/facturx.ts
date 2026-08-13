@@ -74,9 +74,6 @@ export function parseFacturX(xml: string): Transaction {
     throw new RangeError(`Factur-X: missing or invalid grand total "${String(totalRaw)}"`)
   }
 
-  const sellerName = text(
-    (agreement?.['SellerTradeParty'] as Record<string, XmlNode> | undefined)?.['Name'],
-  )
   const buyerName = text(
     (agreement?.['BuyerTradeParty'] as Record<string, XmlNode> | undefined)?.['Name'],
   )
