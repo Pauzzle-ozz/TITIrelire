@@ -13,10 +13,13 @@ import type { ActivityType } from '../engine/types.js'
 import { adviseMicro } from '../advice/micro.js'
 import { adviseParticulier } from '../advice/particulier.js'
 import { adviseSociete } from '../advice/societe.js'
+import { totalEstimatedGain } from '../advice/shared.js'
 import type { Advice } from '../advice/types.js'
 import { renderAdvice } from './advice-render.js'
+import { renderDashboard } from './dashboard-render.js'
 import { applyForm, readForm } from './form-state.js'
 import { INVALID_INPUT_HTML, renderResult } from './render.js'
+import { createRouter } from './router.js'
 import { renderRabbitSVG } from './sprite/rabbit.js'
 import { initTxPanel, type TxPanelHandle } from './tx-panel.js'
 import { initVaultPanel, type VaultPanelHandle } from './vault-panel.js'
@@ -125,6 +128,30 @@ function renderAdviceRegion(profile: Profile): void {
   region.innerHTML = renderAdvice(adviceFor(profile))
 }
 
+/** Human label for a profile, shared by the dashboard. */
+function profileLabel(profile: Profile): string {
+  if (profile === 'particulier') return 'Particulier salarié'
+  if (profile === 'societe') return 'Société (SASU)'
+  return 'Micro-entrepreneur'
+}
+
+/** Renders the home dashboard into the optional `#dashboard` region. */
+function renderDashboardRegion(profile: Profile): void {
+  const region = document.getElementById('dashboard')
+  if (region === null) return
+  let optimisationTotal = 0
+  try {
+    optimisationTotal = totalEstimatedGain(adviceFor(profile))
+  } catch {
+    optimisationTotal = 0
+  }
+  region.innerHTML = renderDashboard({
+    unlocked: vaultPanel?.isUnlocked() ?? false,
+    profileLabel: profileLabel(profile),
+    optimisationTotal,
+  })
+}
+
 /** Reads the form, computes, and renders the result (or an inline validation message). */
 function compute(): void {
   const profile = el<HTMLSelectElement>('profile').value as Profile
@@ -137,6 +164,36 @@ function compute(): void {
     const region = document.getElementById('advice')
     if (region !== null) region.innerHTML = ''
   }
+  renderDashboardRegion(profile)
+}
+
+/** The pages of the app shell, matched to `[data-page]` / `data-route` in the DOM. */
+const PAGES = ['accueil', 'espace', 'situation', 'transactions', 'resultats'] as const
+
+/**
+ * Wires the multi-page shell if present: a hash router shows one `[data-page]` at a time and
+ * highlights the matching nav link. Opt-in — absent on minimal test DOMs, where the app stays
+ * a single stacked view. Nav anchors drive the hash directly, so the router just reacts.
+ */
+function initShell(): void {
+  const shell = document.getElementById('app-shell')
+  if (shell === null) return
+  shell.classList.add('router-on')
+
+  const showPage = (route: string): void => {
+    for (const page of Array.from(document.querySelectorAll<HTMLElement>('[data-page]'))) {
+      page.classList.toggle('is-active', page.dataset['page'] === route)
+    }
+    for (const link of Array.from(document.querySelectorAll<HTMLElement>('.nav-link'))) {
+      link.classList.toggle('is-active', link.dataset['route'] === route)
+    }
+    if (route === 'accueil') {
+      renderDashboardRegion(el<HTMLSelectElement>('profile').value as Profile)
+    }
+  }
+
+  const router = createRouter({ routes: PAGES, defaultRoute: 'accueil', onChange: showPage })
+  router.start()
 }
 
 /** Places the static rabbit logo in the header, when the mark container is present. */
@@ -251,3 +308,4 @@ toggleFields(el<HTMLSelectElement>('profile').value as Profile)
 compute()
 wire()
 initVault()
+initShell()

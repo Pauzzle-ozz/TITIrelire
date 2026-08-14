@@ -53,17 +53,9 @@
       main { max-width: 900px; margin: 0 auto; padding: 2.25rem 1.25rem 4rem; }
       a { color: var(--brand); text-underline-offset: 2px; }
 
-      /* ── Masthead ──────────────────────────────────────────────────────────── */
-      .masthead {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 1.75rem;
-      }
+      /* ── Brand mark (sidebar logo) ─────────────────────────────────────────── */
       .brand-mark {
         flex: none;
-        width: 64px;
-        height: 64px;
         display: grid;
         place-items: center;
         background: var(--card);
@@ -71,18 +63,8 @@
         border-radius: var(--radius);
         box-shadow: var(--shadow);
       }
-      .brand-mark .rabbit { width: 52px; height: auto; display: block; }
-      .brand-text h1 {
-        margin: 0;
-        font-family: var(--font-mono);
-        font-size: 1.7rem;
-        font-weight: 700;
-        letter-spacing: -0.03em;
-        color: var(--ink);
-      }
-      .brand-text h1 .tick { color: var(--brand); }
-      .lede { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.96rem; max-width: 62ch; }
-      .lede strong { color: var(--ink); font-weight: 600; }
+      .brand-mark .rabbit { width: 100%; height: auto; display: block; }
+      .tick { color: var(--brand); }
 
       /* ── Cards ─────────────────────────────────────────────────────────────── */
       .card {
@@ -284,13 +266,62 @@
         84% { transform: translateY(0) scaleY(1); }
       }
 
+      /* ── App shell: sidebar + pages ────────────────────────────────────────── */
+      .app { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100vh; }
+      .sidebar {
+        position: sticky; top: 0; align-self: start; height: 100vh;
+        display: flex; flex-direction: column; gap: 1.2rem;
+        padding: 1.4rem 1.1rem; border-right: 1px solid var(--hair-strong);
+        background: linear-gradient(180deg, #fff, var(--card));
+      }
+      .side-brand { display: flex; align-items: center; gap: 0.6rem; }
+      .side-brand .brand-mark { width: 44px; height: 44px; flex: 0 0 auto; }
+      .side-brand .brand-mark .rabbit { width: 36px; }
+      .side-brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+      .side-name { font-family: var(--font-mono); font-weight: 700; letter-spacing: -0.02em; }
+      .side-tag { font-size: 0.72rem; color: var(--muted); }
+      .side-nav { display: flex; flex-direction: column; gap: 0.2rem; }
+      .nav-link {
+        display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem;
+        border-radius: var(--radius-sm); color: var(--ink); text-decoration: none;
+        font-weight: 600; font-size: 0.92rem; transition: background 0.12s, color 0.12s;
+      }
+      .nav-link:hover { background: var(--good-soft); }
+      .nav-link.is-active { background: var(--brand); color: #fff; }
+      .nav-ico { font-size: 1rem; }
+      .side-foot { margin-top: auto; font-size: 0.74rem; color: var(--muted); }
+      .content { padding: 2rem clamp(1rem, 4vw, 2.5rem); max-width: 900px; }
+      .page-head { margin-bottom: 1.2rem; }
+      .page-head h1 { font-size: 1.5rem; letter-spacing: -0.02em; margin: 0 0 0.2rem; }
+      .page-sub { color: var(--muted); margin: 0; }
+      /* Progressive enhancement: without JS every page stacks; the router hides all but one. */
+      .router-on .page { display: none; }
+      .router-on .page.is-active { display: block; animation: rise 0.28s ease both; }
+
+      /* ── Dashboard ─────────────────────────────────────────────────────────── */
+      .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+      .dash-stat { border: 1px solid var(--hair-strong); border-radius: var(--radius-sm); padding: 1rem; background: #fff; }
+      .dash-stat.accent { border-color: var(--good); background: var(--good-soft); }
+      .dash-stat-k { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; }
+      .dash-stat-v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 1.5rem; font-weight: 700; margin-top: 0.2rem; }
+      .dash-stat-sub { font-size: 0.82rem; color: var(--muted); margin-top: 0.15rem; }
+      .dash-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.8rem; margin-top: 1.2rem; }
+      .dash-card { display: block; text-decoration: none; color: inherit; border: 1px solid var(--hair-strong); border-radius: var(--radius-sm); padding: 1rem; background: #fff; transition: border-color 0.12s, transform 0.12s; }
+      .dash-card:hover { border-color: var(--brand); transform: translateY(-2px); }
+      .dash-card-t { font-weight: 700; }
+      .dash-card-d { color: var(--muted); font-size: 0.86rem; margin-top: 0.2rem; }
+
       /* ── Responsive ────────────────────────────────────────────────────────── */
+      @media (max-width: 820px) {
+        .app { grid-template-columns: 1fr; }
+        .sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
+        .side-foot { display: none; }
+        .side-nav { flex-direction: row; flex-wrap: wrap; margin-left: auto; }
+        .content { padding: 1.4rem 1rem; }
+      }
       @media (max-width: 620px) {
         form, .profile-fields { grid-template-columns: 1fr; }
-        .masthead { gap: 0.8rem; }
-        .brand-mark { width: 54px; height: 54px; }
-        .brand-mark .rabbit { width: 44px; }
-        .brand-text h1 { font-size: 1.45rem; }
+        .page-head h1 { font-size: 1.3rem; }
       }
 
       /* ── Reduced motion: no hop, no entrance ───────────────────────────────── */
@@ -310,21 +341,42 @@
       <p class="splash-tag">on déplie le calcul…</p>
     </div>
 
-    <main>
-      <header class="masthead">
-        <div id="brand-mark" class="brand-mark" aria-hidden="true"></div>
-        <div class="brand-text">
-          <h1>TITI<span class="tick">'</span>relire</h1>
-          <p class="lede">
-            Simulateur fiscal transparent pour indépendants — cotisations, impôt et la
-            meilleure option, expliqués ligne par ligne. Tout est calculé
-            <strong>dans votre navigateur</strong> : aucune donnée n'est envoyée.
-          </p>
+    <div class="app" id="app-shell">
+      <aside class="sidebar">
+        <div class="side-brand">
+          <div id="brand-mark" class="brand-mark" aria-hidden="true"></div>
+          <div class="side-brand-text">
+            <span class="side-name">TITI<span class="tick">'</span>relire</span>
+            <span class="side-tag">la tirelire honnête</span>
+          </div>
         </div>
-      </header>
+        <nav class="side-nav" aria-label="Navigation principale">
+          <a class="nav-link" data-route="accueil" href="#/accueil"><span class="nav-ico">🏠</span> Accueil</a>
+          <a class="nav-link" data-route="espace" href="#/espace"><span class="nav-ico">🔐</span> Mon espace</a>
+          <a class="nav-link" data-route="situation" href="#/situation"><span class="nav-ico">📝</span> Ma situation</a>
+          <a class="nav-link" data-route="transactions" href="#/transactions"><span class="nav-ico">📊</span> Mes transactions</a>
+          <a class="nav-link" data-route="resultats" href="#/resultats"><span class="nav-ico">🧮</span> Résultats &amp; conseils</a>
+        </nav>
+        <p class="side-foot">Local-first · vos données restent sur cet appareil.</p>
+      </aside>
 
-      <section id="vault" class="card" aria-labelledby="vault-h">
-        <h2 id="vault-h">Mon espace</h2>
+      <main class="content">
+      <!-- ── Page : Accueil / tableau de bord ─────────────────────────────── -->
+      <section class="page is-active" data-page="accueil" aria-labelledby="dash-h">
+        <header class="page-head">
+          <h1 id="dash-h">Votre tirelire, en un coup d'œil</h1>
+          <p class="page-sub">Simple et transparent, de la saisie au résultat — tout est calculé dans votre navigateur.</p>
+        </header>
+        <div id="dashboard"></div>
+      </section>
+
+      <!-- ── Page : Mon espace ────────────────────────────────────────────── -->
+      <section class="page" data-page="espace" aria-labelledby="espace-h">
+        <header class="page-head">
+          <h1 id="espace-h">Mon espace</h1>
+          <p class="page-sub">Vos données, chiffrées sur cet appareil.</p>
+        </header>
+      <section id="vault" class="card">
         <p class="vault-lede">
           Enregistrez vos données pour les retrouver sans les ressaisir. Elles sont
           <strong>chiffrées avec votre mot de passe</strong> et ne quittent jamais cet
@@ -347,9 +399,15 @@
         </div>
         <p id="vault-msg" class="vault-msg" role="status" aria-live="polite"></p>
       </section>
+      </section>
 
-      <section class="card" aria-labelledby="situation-h">
-        <h2 id="situation-h">Votre situation</h2>
+      <!-- ── Page : Ma situation ──────────────────────────────────────────── -->
+      <section class="page" data-page="situation" aria-labelledby="situation-h">
+        <header class="page-head">
+          <h1 id="situation-h">Ma situation</h1>
+          <p class="page-sub">Choisissez votre profil et renseignez vos chiffres.</p>
+        </header>
+      <section class="card">
         <form id="form">
           <div class="field full">
             <label for="profile">Profil</label>
@@ -442,9 +500,15 @@
           </div>
         </form>
       </section>
+      </section>
 
-      <section id="transactions" class="card" aria-labelledby="tx-h">
-        <h2 id="tx-h">Mes transactions</h2>
+      <!-- ── Page : Mes transactions ──────────────────────────────────────── -->
+      <section class="page" data-page="transactions" aria-labelledby="tx-h">
+        <header class="page-head">
+          <h1 id="tx-h">Mes transactions</h1>
+          <p class="page-sub">Importez vos mouvements ; ils sont classés pro/perso automatiquement.</p>
+        </header>
+      <section id="transactions" class="card">
         <p class="tx-lede">
           Importez vos mouvements : un <strong>relevé CSV</strong> (banque, Stripe, Qonto…) ou
           le <strong>JSON d'un connecteur</strong> lancé hors navigateur (Stripe, banque DSP2).
@@ -479,15 +543,24 @@
         <p id="tx-msg" class="tx-msg" role="status" aria-live="polite"></p>
         <div id="tx-table"></div>
       </section>
+      </section>
 
-      <div id="result" aria-live="polite"></div>
-      <div id="advice" aria-live="polite"></div>
+      <!-- ── Page : Résultats & conseils ──────────────────────────────────── -->
+      <section class="page" data-page="resultats" aria-labelledby="res-h">
+        <header class="page-head">
+          <h1 id="res-h">Résultats &amp; conseils</h1>
+          <p class="page-sub">Le détail ligne par ligne, et les optimisations chiffrées pour votre profil.</p>
+        </header>
+        <div id="result" aria-live="polite"></div>
+        <div id="advice" aria-live="polite"></div>
+      </section>
 
       <footer>
         Aide à la décision, <strong>pas un conseil fiscal</strong>. Paramètres 2026 —
         <a href="docs/parameters-2026.md">sources</a>. Projet open source (Apache-2.0).
       </footer>
-    </main>
+      </main>
+    </div>
 
     <noscript>
       <style>
