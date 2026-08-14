@@ -158,6 +158,10 @@ export { classifyTransaction, classifyAll } from './classify/classify.js'
 export type { CategoryTotals, ClassifiedSummary } from './classify/aggregate.js'
 export { aggregateByCategory, proRevenue } from './classify/aggregate.js'
 
+// ── TVA (régime + estimate) ───────────────────────────────────────────────────
+export type { TvaInput, TvaStatus, TvaRegime } from './engine/tva.js'
+export { tvaStatus, TVA_TAUX_NORMAL } from './engine/tva.js'
+
 // ── Régime réel (BIC/BNC) + micro-vs-réel ─────────────────────────────────────
 export type { ReelInput, ReelResult, MicroReelComparison } from './engine/reel.js'
 export { simulateReel, compareMicroReel, ESTIMATED_TNS_RATE } from './engine/reel.js'
