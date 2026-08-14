@@ -119,10 +119,13 @@ The move from a stateless simulator to a fiscal copilot, on top of Tracks A & B:
 
 1. **Encrypted local vault** — ✅ done (`src/vault`): master-password AES-GCM store, opt-in
    UI panel with prefill + autosave. The foundation the rest of this track writes into.
-2. **Data entry & review UX** — 🟡 in progress. ✅ a transactions panel (`src/ui/tx-*`) that
-   imports a CSV statement (preset-based), shows each movement classified with its reason,
-   lets the user correct a category in one click (learned + persisted), and feeds the
-   professional-only CA into the engine. Next: one-click live-connector onboarding (OAuth).
+2. **Data entry & review UX** — ✅ a transactions panel (`src/ui/tx-*`) that imports a CSV
+   statement (preset-based) **or the canonical JSON produced by the self-hosted connector
+   runner** (Stripe, DSP2 bank), shows each movement classified with its reason, lets the user
+   correct a category in one click (learned + persisted), and feeds the professional-only CA
+   into the engine. **Real one-click bank OAuth belongs to the desktop app**: only a local
+   process (the Tauri Rust core) can run the loopback OAuth flow and hold tokens in the OS
+   keychain without shipping a secret to the browser — see the desktop-app roadmap item.
 3. **Income/expense classification (pro vs perso)** — ✅ engine done (`src/classify`): a
    transparent cascade (learned corrections → deterministic FR rules → heuristics → unknown),
    each verdict carrying a confidence, source and French reason. `aggregateByCategory` /
@@ -139,6 +142,11 @@ The move from a stateless simulator to a fiscal copilot, on top of Tracks A & B:
    payroll model for salaire-vs-dividende. Posture: information & transparent simulation.
 5. **Desktop app (Tauri)** — package the whole thing as a one-click installer; connectors and
    their secrets move into the Rust layer, resolving the local-first vs live-secrets tension.
+   This is also where **real one-click bank OAuth** lives: the Rust core opens the aggregator's
+   consent page, catches the redirect on a `localhost` loopback, exchanges the code for tokens
+   locally, and stores them in the OS keychain — no hosted server, no secret in the web layer.
+   The only case still needing a tiny hosted token-broker is an aggregator that mandates a
+   confidential client (a secret that cannot ship in a distributed binary).
 
 ## Testing & workflow
 
