@@ -258,3 +258,29 @@ export function simulate(raw: SimulationInput): SimulationResult {
     warnings: buildWarnings(input),
   }
 }
+
+/** The micro-régime turnover ceilings for an activity (euros, 2026 parameters). */
+export interface MicroThresholds {
+  /** Turnover ceiling above which the micro régime no longer applies. */
+  plafondMicro: number
+  /** Turnover ceiling of the VAT franchise en base (below it, no VAT is charged). */
+  franchiseTVA: number
+}
+
+/**
+ * Reads the micro-régime ceilings for an activity from the rule base — the single source of
+ * truth, so a finance-act change updates advice automatically. These depend only on the
+ * activity category, so no other situation input is needed.
+ *
+ * @throws RangeError on an unknown activity.
+ */
+export function microThresholds(activity: ActivityType): MicroThresholds {
+  if (!VALID_ACTIVITIES.has(activity)) {
+    throw new RangeError(`Unknown activity: ${String(activity)}`)
+  }
+  engine.setSituation({ 'micro . activité': ACTIVITE_PUBLICODES[activity] })
+  return {
+    plafondMicro: round2(evNumber('micro . seuils . plafond micro')),
+    franchiseTVA: round2(evNumber('micro . seuils . franchise TVA')),
+  }
+}

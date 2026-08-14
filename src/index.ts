@@ -24,7 +24,8 @@ export type {
   WarningLevel,
 } from './engine/types.js'
 
-export { normalize, simulate } from './engine/simulate.js'
+export { normalize, simulate, microThresholds } from './engine/simulate.js'
+export type { MicroThresholds } from './engine/simulate.js'
 
 export type {
   Comparison,
