@@ -17,10 +17,11 @@ TI'TIrelire ("tirelire" is French for *piggy bank*) is an open-source tool to ma
 and business taxes **simple and transparent — from what you enter to the result**. Instead of
 a black box, it shows the maths line by line, and tells you how to keep more of your money.
 
-**V1 scope — the honest micro-entrepreneur simulator.** For French *auto-entrepreneurs*: enter
-your activity and turnover, and see exactly what you owe (URSSAF social contributions + income
-tax), every line explained, plus **which tax option is best for you** (progressive scale vs
-*versement libératoire*) and how many euros it saves.
+**Three profiles today.** Pick your situation and see exactly what you owe, every line
+explained, plus **which option is best for you** and how many euros it saves:
+- **Micro-entrepreneur** — URSSAF contributions + income tax; barème vs *versement libératoire*.
+- **Salaried individual** — income tax (10 % / frais réels) + a **PER** optimisation.
+- **Company (SASU)** — corporate tax (IS) + dividends; **PFU vs the progressive scale**.
 
 It is **local-first**: every calculation runs in your browser. No account, no server, no data
 leaves your device.

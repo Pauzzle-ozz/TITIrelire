@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Single-shareholder company profile** (`impotSocietes` / `simulateSociete` /
   `compareDividendes`): SASU corporate tax (15 %/25 %) and dividend taxation, PFU vs barème.
 - Shared 2026 income-tax scale (`impotBareme` / `impotMarginal`) reused across profiles.
+- **Local UI now covers all three profiles** via a profile selector (micro-entrepreneur,
+  salaried individual, SASU), each with its transparent breakdown and optimisation comparison.
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md): design principles, the local-first vs
   live-connectors stance, and the roadmap for both workstreams (fiscal coverage + data
   connection).
