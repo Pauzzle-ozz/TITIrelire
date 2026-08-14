@@ -160,4 +160,7 @@ export { aggregateByCategory, proRevenue } from './classify/aggregate.js'
 
 // ── Advice engine (transparent optimisation) ──────────────────────────────────
 export type { Advice, AdviceKind } from './advice/types.js'
-export { adviseMicro, totalEstimatedGain } from './advice/micro.js'
+export { totalEstimatedGain } from './advice/shared.js'
+export { adviseMicro } from './advice/micro.js'
+export { adviseParticulier } from './advice/particulier.js'
+export { adviseSociete } from './advice/societe.js'
