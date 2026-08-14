@@ -36,7 +36,8 @@ function setupDom(): void {
         <input id="s-reduced" type="checkbox" checked />
       </div>
     </form>
-    <div id="result"></div>`
+    <div id="result"></div>
+    <div id="advice"></div>`
 }
 
 function switchProfile(value: string): void {
@@ -58,6 +59,19 @@ describe('UI wiring (happy-dom)', () => {
     expect(result.innerHTML).toContain('Le détail, ligne par ligne')
     expect(result.innerHTML).toContain('versement libératoire') // BNC 40 000 € → VL wins
     expect(result.innerHTML).toContain('conseillé')
+  })
+
+  it('renders transparent advice for the micro profile', async () => {
+    await import('../src/ui/main.js')
+    const advice = document.getElementById('advice')!
+    expect(advice.innerHTML).toContain('Conseils')
+    expect(advice.innerHTML).toContain('ne remplace pas un expert-comptable')
+  })
+
+  it('clears the advice region when leaving the micro profile', async () => {
+    await import('../src/ui/main.js')
+    switchProfile('particulier')
+    expect(document.getElementById('advice')!.innerHTML).toBe('')
   })
 
   it('switches to the salaried profile and shows the PER optimisation', async () => {

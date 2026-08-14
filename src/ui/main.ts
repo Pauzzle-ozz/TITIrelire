@@ -10,6 +10,8 @@ import { compare, type CompareInput } from '../engine/compare.js'
 import { comparePER, simulateParticulier, type ParticulierInput } from '../engine/particulier.js'
 import { compareDividendes, type SocieteInput } from '../engine/societe.js'
 import type { ActivityType } from '../engine/types.js'
+import { adviseMicro } from '../advice/micro.js'
+import { renderAdvice } from './advice-render.js'
 import { applyForm, readForm } from './form-state.js'
 import { INVALID_INPUT_HTML, renderResult } from './render.js'
 import { renderRabbitSVG } from './sprite/rabbit.js'
@@ -103,14 +105,27 @@ function toggleFields(profile: Profile): void {
   }
 }
 
+/**
+ * Renders transparent advice for the micro profile into the optional `#advice` region.
+ * No-op when the region is absent (e.g. minimal test DOMs) or the profile is not micro.
+ */
+function renderAdviceRegion(profile: Profile): void {
+  const region = document.getElementById('advice')
+  if (region === null) return
+  region.innerHTML = profile === 'micro' ? renderAdvice(adviseMicro(readMicro())) : ''
+}
+
 /** Reads the form, computes, and renders the result (or an inline validation message). */
 function compute(): void {
   const profile = el<HTMLSelectElement>('profile').value as Profile
   const result = el('result')
   try {
     result.innerHTML = renderResult(buildViewModel(profile))
+    renderAdviceRegion(profile)
   } catch {
     result.innerHTML = INVALID_INPUT_HTML
+    const region = document.getElementById('advice')
+    if (region !== null) region.innerHTML = ''
   }
 }
 

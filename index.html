@@ -185,6 +185,22 @@
       .tx-conf { display: inline-block; margin-left: 0.4rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
       @media (max-width: 620px) { .tx-import { grid-template-columns: 1fr; } .tx-table .tx-reason { display: none; } }
 
+      /* ── Advice ────────────────────────────────────────────────────────────── */
+      #advice > .advice-card { animation: rise 0.32s ease both; margin-top: 1rem; }
+      .advice-headline { font-size: 1rem; margin: 0 0 0.6rem; }
+      .advice-hint { color: var(--muted); font-weight: 400; font-size: 0.82rem; }
+      .advice-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.6rem; }
+      .advice-item { padding: 0.7rem 0.85rem; border-radius: var(--radius-sm); border-left: 3px solid var(--hair-strong); background: #fff; }
+      .advice-item.kind-optimisation { border-left-color: var(--good); background: var(--good-soft); }
+      .advice-item.kind-alerte { border-left-color: var(--warn); background: var(--warn-soft); }
+      .advice-item.kind-info { border-left-color: var(--hair-strong); }
+      .advice-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; }
+      .advice-kind { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; color: var(--muted); }
+      .advice-title { font-weight: 600; }
+      .advice-gain { margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 700; color: var(--good); }
+      .advice-detail { margin: 0.3rem 0 0; color: var(--muted); font-size: 0.88rem; }
+      .advice-disclaimer { margin: 0.8rem 0 0; font-size: 0.78rem; color: var(--muted); font-style: italic; }
+
       /* ── Result: recommendation headline ───────────────────────────────────── */
       .reco {
         border: 1px solid var(--good);
@@ -461,6 +477,7 @@
       </section>
 
       <div id="result" aria-live="polite"></div>
+      <div id="advice" aria-live="polite"></div>
 
       <footer>
         Aide à la décision, <strong>pas un conseil fiscal</strong>. Paramètres 2026 —
