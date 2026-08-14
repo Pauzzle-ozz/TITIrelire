@@ -133,3 +133,26 @@ export {
   DEFAULT_STORAGE_KEY,
 } from './vault/storage.js'
 export { Vault, migrate } from './vault/vault.js'
+
+// ── Pro/perso classification ──────────────────────────────────────────────────
+export type {
+  TxCategory,
+  ClassificationSource,
+  Classification,
+  ClassifiedTransaction,
+} from './classify/types.js'
+export { UNCLASSIFIED } from './classify/types.js'
+export type { ClassificationRule, RuleContext } from './classify/rules.js'
+export { RULES, normalizeText, ruleContext } from './classify/rules.js'
+export type { LearnedRule, LearnedRules } from './classify/learned.js'
+export {
+  learningKey,
+  recordCorrection,
+  forgetCorrection,
+  lookupLearned,
+  applyLearned,
+  coerceLearnedRules,
+} from './classify/learned.js'
+export { classifyTransaction, classifyAll } from './classify/classify.js'
+export type { CategoryTotals, ClassifiedSummary } from './classify/aggregate.js'
+export { aggregateByCategory, proRevenue } from './classify/aggregate.js'

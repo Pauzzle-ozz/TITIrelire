@@ -27,6 +27,7 @@ import {
 } from './types.js'
 import { normalizeTransaction } from '../transactions/normalize.js'
 import type { Transaction } from '../transactions/types.js'
+import { coerceLearnedRules } from '../classify/learned.js'
 
 /** Keeps only well-formed per-profile input records, dropping unknown keys/values. */
 function coerceProfileInputs(value: unknown): ProfileInputs {
@@ -78,6 +79,8 @@ export function migrate(parsed: unknown, now: string): VaultState {
     activeProfile: isVaultProfile(o.activeProfile) ? o.activeProfile : 'micro',
     profileInputs: coerceProfileInputs(o.profileInputs),
     transactions: coerceTransactions(o.transactions),
+    // v1 vaults have no learnedCategories → coerces to {} (the v1→v2 migration step).
+    learnedCategories: coerceLearnedRules(o.learnedCategories),
     updatedAt: typeof o.updatedAt === 'string' ? o.updatedAt : now,
   }
 }

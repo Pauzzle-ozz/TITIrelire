@@ -145,6 +145,42 @@ describe('migrate', () => {
     expect(() => migrate({ schemaVersion: SCHEMA_VERSION + 1 }, NOW)).toThrow(/newer than supported/i)
   })
 
+  it('migrates a v1 vault (no learnedCategories) to v2 with an empty map', () => {
+    const state = migrate(
+      { schemaVersion: 1, activeProfile: 'micro', profileInputs: {}, transactions: [] },
+      NOW,
+    )
+    expect(state.schemaVersion).toBe(SCHEMA_VERSION)
+    expect(state.learnedCategories).toEqual({})
+  })
+
+  it('keeps valid learned rules and drops malformed ones on load', () => {
+    const state = migrate(
+      {
+        schemaVersion: 2,
+        learnedCategories: {
+          'cp:acme': { category: 'pro', updatedAt: NOW },
+          'cp:bad': { category: 'invalid', updatedAt: NOW },
+        },
+      },
+      NOW,
+    )
+    expect(state.learnedCategories).toEqual({ 'cp:acme': { category: 'pro', updatedAt: NOW } })
+  })
+})
+
+describe('learned categories persistence', () => {
+  it('saves and reopens remembered corrections', async () => {
+    const storage = new MemoryVaultStorage()
+    const vault = await Vault.create(storage, PW, NOW)
+    await vault.save(
+      { ...vault.state, learnedCategories: { 'cp:acme sarl': { category: 'pro', updatedAt: NOW } } },
+      LATER,
+    )
+    const reopened = await Vault.open(storage, PW, NOW)
+    expect(reopened.state.learnedCategories).toEqual({ 'cp:acme sarl': { category: 'pro', updatedAt: NOW } })
+  })
+
   it('open surfaces the future-schema refusal', async () => {
     const storage = new MemoryVaultStorage()
     const blob = await encryptString(JSON.stringify({ schemaVersion: 99 }), PW)

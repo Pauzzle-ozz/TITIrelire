@@ -16,12 +16,16 @@
  *   data-connection layer).
  */
 import type { Transaction } from '../transactions/types.js'
+import type { LearnedRules } from '../classify/learned.js'
 
 /**
  * Current on-disk schema version. Bump this whenever {@link VaultState} changes shape in a
  * way that needs a migration, and add a step to `migrate()` (see {@link ./vault.ts}).
+ *
+ * - v1: initial (activeProfile, profileInputs, transactions).
+ * - v2: added `learnedCategories` (remembered pro/perso corrections).
  */
-export const SCHEMA_VERSION = 1 as const
+export const SCHEMA_VERSION = 2 as const
 
 /** The fiscal profiles the personal space can remember inputs for. */
 export type VaultProfile = 'micro' | 'particulier' | 'societe'
@@ -43,6 +47,8 @@ export interface VaultState {
   profileInputs: ProfileInputs
   /** Imported/normalized transactions the personal space keeps across sessions. */
   transactions: Transaction[]
+  /** Remembered pro/perso corrections (schema v2+) — the classification memory. */
+  learnedCategories: LearnedRules
   /** ISO datetime of the last save, for display and conflict/debug purposes. */
   updatedAt: string
 }
@@ -57,6 +63,7 @@ export function emptyVaultState(updatedAt: string): VaultState {
     activeProfile: 'micro',
     profileInputs: {},
     transactions: [],
+    learnedCategories: {},
     updatedAt,
   }
 }
