@@ -128,6 +128,28 @@
       .check input { width: 1.05rem; height: 1.05rem; accent-color: var(--brand); }
       .check label { font-weight: 500; color: var(--ink); }
 
+      /* ── Personal space (vault) ────────────────────────────────────────────── */
+      .vault-lede { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.9rem; }
+      .vault-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem 1rem; }
+      .vault-row[hidden] { display: none; }
+      .vault-row .field { flex: 1 1 14rem; }
+      #vault input[type='password'] {
+        font: inherit; padding: 0.55rem 0.65rem; border: 1px solid var(--hair-strong);
+        border-radius: var(--radius-sm); background: #fff; color: inherit;
+      }
+      .vault-actions { display: flex; gap: 0.6rem; }
+      #vault button {
+        font: inherit; font-weight: 600; cursor: pointer;
+        padding: 0.55rem 1rem; border-radius: var(--radius-sm);
+        border: 1px solid var(--brand); background: var(--brand); color: #fff;
+        transition: filter 0.12s;
+      }
+      #vault button:hover { filter: brightness(1.06); }
+      #vault #vault-lock { background: #fff; color: var(--brand); }
+      #vault button[hidden] { display: none; }
+      .vault-status { color: var(--ink); font-size: 0.9rem; margin: 0; flex: 1 1 12rem; }
+      .vault-msg { color: var(--muted); font-size: 0.85rem; margin: 0.7rem 0 0; min-height: 1.1em; }
+
       /* ── Result: recommendation headline ───────────────────────────────────── */
       .reco {
         border: 1px solid var(--good);
@@ -249,6 +271,31 @@
           </p>
         </div>
       </header>
+
+      <section id="vault" class="card" aria-labelledby="vault-h">
+        <h2 id="vault-h">Mon espace</h2>
+        <p class="vault-lede">
+          Enregistrez vos données pour les retrouver sans les ressaisir. Elles sont
+          <strong>chiffrées avec votre mot de passe</strong> et ne quittent jamais cet
+          appareil. Perdre ce mot de passe rend les données irrécupérables : c'est le prix
+          d'un vrai chiffrement.
+        </p>
+        <div id="vault-locked" class="vault-row">
+          <div class="field">
+            <label for="vault-password">Mot de passe de l'espace</label>
+            <input id="vault-password" type="password" autocomplete="current-password" />
+          </div>
+          <div class="vault-actions">
+            <button id="vault-unlock" type="button" hidden>Déverrouiller</button>
+            <button id="vault-create" type="button" hidden>Créer mon espace</button>
+          </div>
+        </div>
+        <div id="vault-unlocked" class="vault-row" hidden>
+          <p class="vault-status">Espace déverrouillé — vos saisies sont enregistrées automatiquement.</p>
+          <button id="vault-lock" type="button">Verrouiller</button>
+        </div>
+        <p id="vault-msg" class="vault-msg" role="status" aria-live="polite"></p>
+      </section>
 
       <section class="card" aria-labelledby="situation-h">
         <h2 id="situation-h">Votre situation</h2>

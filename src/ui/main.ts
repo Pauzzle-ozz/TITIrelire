@@ -10,16 +10,23 @@ import { compare, type CompareInput } from '../engine/compare.js'
 import { comparePER, simulateParticulier, type ParticulierInput } from '../engine/particulier.js'
 import { compareDividendes, type SocieteInput } from '../engine/societe.js'
 import type { ActivityType } from '../engine/types.js'
+import { applyForm, readForm } from './form-state.js'
 import { INVALID_INPUT_HTML, renderResult } from './render.js'
 import { renderRabbitSVG } from './sprite/rabbit.js'
+import { initVaultPanel, type VaultPanelHandle } from './vault-panel.js'
 import {
   toMicroViewModel,
   toParticulierViewModel,
   toSocieteViewModel,
   type ViewModel,
 } from './view-model.js'
+import { WebVaultStorage } from '../vault/storage.js'
+import type { VaultState } from '../vault/types.js'
 
 type Profile = 'micro' | 'particulier' | 'societe'
+
+/** The personal-space panel, once wired (null when the page has no vault container). */
+let vaultPanel: VaultPanelHandle | null = null
 
 /** Minimum time the boot splash stays up, so the mascot is actually seen. */
 export const SPLASH_MIN_MS = 750
@@ -142,8 +149,38 @@ function wire(): void {
   el('profile').addEventListener('change', () => {
     toggleFields(el<HTMLSelectElement>('profile').value as Profile)
     compute()
+    void vaultPanel?.save()
   })
-  el('form').addEventListener('input', compute)
+  el('form').addEventListener('input', () => {
+    compute()
+    void vaultPanel?.save()
+  })
+}
+
+/** Restores a saved snapshot into the form, then reveals the right fields and recomputes. */
+function applySnapshot(state: VaultState): void {
+  applyForm(document, state)
+  toggleFields(state.activeProfile)
+  compute()
+}
+
+/**
+ * Wires the personal-space panel when the page provides one. Kept optional so the simulator
+ * still runs stateless (and secret-free) on pages without a vault. localStorage is only
+ * touched when a `#vault` container exists, so headless/test pages are unaffected.
+ */
+function initVault(): void {
+  if (document.getElementById('vault') === null) return
+  const storage = new WebVaultStorage()
+  void initVaultPanel({
+    doc: document,
+    storage,
+    now: () => new Date().toISOString(),
+    readForm,
+    applySnapshot,
+  }).then((panel) => {
+    vaultPanel = panel
+  })
 }
 
 // ── Boot ────────────────────────────────────────────────────────────────────────
@@ -154,3 +191,4 @@ mountBrand()
 toggleFields(el<HTMLSelectElement>('profile').value as Profile)
 compute()
 wire()
+initVault()
