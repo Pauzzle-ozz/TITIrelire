@@ -6,7 +6,7 @@
  * this pure makes the display logic unit-testable.
  */
 import type { Comparison } from '../engine/compare.js'
-import type { DividendComparison, SocieteResult } from '../engine/societe.js'
+import type { DividendComparison } from '../engine/societe.js'
 import type { ParticulierResult, PerComparison } from '../engine/particulier.js'
 import type { IncomeTaxMode, LineItem, WarningLevel } from '../engine/types.js'
 
@@ -59,6 +59,8 @@ export interface ViewModel {
   netLabel: string
   /** Formatted effective rate, when relevant. */
   effectiveRate?: string
+  /** Caption for the effective rate (its meaning differs per profile). */
+  effectiveRateLabel?: string
   /** Optional 2-option comparison. */
   comparison?: ViewComparison
   /** Line-by-line breakdown. */
@@ -82,6 +84,7 @@ export function toMicroViewModel(comparison: Comparison): ViewModel {
     netHighlight: formatEUR(recommended.netIncome),
     netLabel: 'revenu net estimé',
     effectiveRate: formatPct(recommended.result.effectiveLevyRate),
+    effectiveRateLabel: 'Taux de prélèvement effectif',
     comparison: {
       title: 'Barème vs versement libératoire',
       columns: ['Option', 'Impôt', 'Prélèvements', 'Revenu net'],
@@ -109,6 +112,7 @@ export function toParticulierViewModel(result: ParticulierResult, per: PerCompar
     netHighlight: formatEUR(result.netAfterTax),
     netLabel: 'revenu net après impôt',
     effectiveRate: formatPct(result.effectiveRate),
+    effectiveRateLabel: "Taux marginal d'imposition du salaire",
     ...(hasPer
       ? {
           comparison: {
@@ -135,18 +139,23 @@ export function toParticulierViewModel(result: ParticulierResult, per: PerCompar
 }
 
 /** Company (SASU): IS then dividends, PFU vs barème. */
-export function toSocieteViewModel(result: SocieteResult, comparison: DividendComparison): ViewModel {
-  const recommendedNet = comparison.recommended === 'pfu' ? comparison.netPfu : comparison.netBareme
-  const label = comparison.recommended === 'pfu' ? 'le PFU (flat tax)' : 'le barème progressif'
-  const benefice = result.input.benefice
-  const overallRate = benefice > 0 ? 1 - recommendedNet / benefice : 0
+export function toSocieteViewModel(comparison: DividendComparison): ViewModel {
+  const barème = comparison.recommended === 'bareme'
+  const recommendedNet = barème ? comparison.netBareme : comparison.netPfu
+  const label = barème ? 'le barème progressif' : 'le PFU (flat tax)'
+  // Levies on the dividend under the recommended option (matches the "net dividende" headline).
+  const dividende = comparison.dividende
+  const levyRate = dividende > 0 ? (dividende - recommendedNet) / dividende : 0
+  // Show the breakdown of the recommended option so it reconciles with the headline net.
+  const breakdown = barème ? comparison.baremeBreakdown : comparison.pfuBreakdown
 
   return {
     recommendationTitle: `Recommandation : ${capitalize(label)}`,
     recommendationDetail: comparison.explanation,
     netHighlight: formatEUR(recommendedNet),
     netLabel: 'net dividende (associé)',
-    effectiveRate: formatPct(overallRate),
+    effectiveRate: formatPct(levyRate),
+    effectiveRateLabel: 'Taux de prélèvement sur le dividende',
     comparison: {
       title: 'PFU vs barème (dividende)',
       columns: ['Option', 'Net dividende'],
@@ -163,7 +172,7 @@ export function toSocieteViewModel(result: SocieteResult, comparison: DividendCo
         },
       ],
     },
-    breakdown: result.breakdown.map(rowFromLine),
+    breakdown: breakdown.map(rowFromLine),
     warnings: comparison.warnings.map((w) => ({ level: w.level, message: w.message })),
   }
 }

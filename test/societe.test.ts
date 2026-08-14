@@ -83,6 +83,17 @@ describe('compareDividendes — PFU vs barème (with CSG déductible)', () => {
     expect(c.warnings.some((w) => w.code === 'csg_deductible_approx')).toBe(true)
   })
 
+  it('exposes per-option breakdowns that reconcile with each net', () => {
+    const c = compareDividendes({ benefice: 100000 })
+    const sum = (lines: { amount: number }[]) => Math.round(lines.reduce((a, l) => a + l.amount, 0) * 100) / 100
+    // benefice − net = total levies (IS + option-specific levies)
+    expect(sum(c.pfuBreakdown)).toBe(100000 - c.netPfu)
+    expect(sum(c.baremeBreakdown)).toBe(100000 - c.netBareme)
+    // The barème breakdown replaces the flat-tax line with PS + IR.
+    expect(c.baremeBreakdown.some((l) => l.key === 'ps')).toBe(true)
+    expect(c.baremeBreakdown.some((l) => l.key === 'pfu')).toBe(false)
+  })
+
   it('recommended net is always the higher of the two', () => {
     const c = compareDividendes({ benefice: 60000 })
     const recommendedNet = c.recommended === 'pfu' ? c.netPfu : c.netBareme

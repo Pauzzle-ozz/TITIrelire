@@ -59,6 +59,15 @@ describe('compare — structure and explanation', () => {
     expect(c.warnings.some((w) => w.code === 'vl_eligibilite_rfr')).toBe(true)
   })
 
+  it('still surfaces the VL eligibility caveat when the barème is recommended', () => {
+    // Both options are shown, so the VL condition must not be dropped.
+    const c = compare({ activity: 'vente_marchandises', revenue: 50000 })
+    expect(c.recommended).toBe('bareme')
+    expect(c.warnings.some((w) => w.code === 'vl_eligibilite_rfr')).toBe(true)
+    // deduped by code — CFE note appears once, not twice.
+    expect(c.warnings.filter((w) => w.code === 'cfe_non_incluse')).toHaveLength(1)
+  })
+
   it('recommended net income is always the higher of the two', () => {
     const c = compare({ activity: 'liberal_cipav', revenue: 60000 })
     const recommendedNet =

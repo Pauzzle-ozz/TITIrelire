@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  compare,
-  compareDividendes,
-  comparePER,
-  simulateParticulier,
-  simulateSociete,
-} from '../src/index.js'
+import { compare, compareDividendes, comparePER, simulateParticulier } from '../src/index.js'
 import {
   formatEUR,
   formatPct,
@@ -74,12 +68,15 @@ describe('toParticulierViewModel', () => {
 })
 
 describe('toSocieteViewModel', () => {
-  it('shows PFU vs barème with the IS breakdown', () => {
-    const input = { benefice: 100000 }
-    const vm = toSocieteViewModel(simulateSociete(input), compareDividendes(input))
+  it('shows PFU vs barème and a breakdown consistent with the recommended option', () => {
+    // benefice 100 000 → barème is recommended, so the breakdown must be the barème path.
+    const vm = toSocieteViewModel(compareDividendes({ benefice: 100000 }))
     expect(vm.comparison?.rows).toHaveLength(2)
-    expect(vm.recommendationTitle).toMatch(/PFU|barème/)
+    expect(vm.recommendationTitle).toContain('barème')
     expect(vm.breakdown.some((r) => r.label.includes('sociétés'))).toBe(true)
+    expect(vm.breakdown.some((r) => r.label.includes('Prélèvements sociaux'))).toBe(true)
+    expect(vm.breakdown.some((r) => r.label.includes('flat tax'))).toBe(false)
     expect(vm.netHighlight).toContain('€')
+    expect(vm.effectiveRateLabel).toContain('dividende')
   })
 })

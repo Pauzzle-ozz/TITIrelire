@@ -12,6 +12,13 @@ import type { SimulationInput, SimulationResult } from '../engine/types.js'
 import { aggregateTurnover } from './aggregate.js'
 import type { AggregateOptions, Transaction, TurnoverSummary } from './types.js'
 
+/** The tax engine is euro-only; guard the seam so non-EUR turnover is never taxed as euros. */
+function assertEur(summary: TurnoverSummary): void {
+  if (summary.currency !== 'EUR') {
+    throw new RangeError(`The tax engine expects EUR; aggregated currency is ${summary.currency}`)
+  }
+}
+
 /** Options for {@link simulateFromTransactions}: a simulation input without `revenue`, plus how to aggregate. */
 export type SimulateFromTransactionsOptions = Omit<SimulationInput, 'revenue'> & AggregateOptions
 
@@ -37,6 +44,7 @@ export function simulateFromTransactions(
 ): SimulateFromTransactionsResult {
   const { year, currency, ...simInput } = options
   const summary = aggregateTurnover(transactions, { ...(year !== undefined ? { year } : {}), ...(currency !== undefined ? { currency } : {}) })
+  assertEur(summary)
   const simulation = simulate({ ...simInput, revenue: summary.revenue })
   return { summary, simulation }
 }
@@ -48,6 +56,7 @@ export function compareFromTransactions(
 ): CompareFromTransactionsResult {
   const { year, currency, ...compareInput } = options
   const summary = aggregateTurnover(transactions, { ...(year !== undefined ? { year } : {}), ...(currency !== undefined ? { currency } : {}) })
+  assertEur(summary)
   const comparison = compare({ ...compareInput, revenue: summary.revenue })
   return { summary, comparison }
 }

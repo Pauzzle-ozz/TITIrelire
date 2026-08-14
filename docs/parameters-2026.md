@@ -1,8 +1,10 @@
-# Micro-entrepreneur parameters — 2026
+# Fiscal parameters — 2026
 
-This is the sourced reference for every figure hard-coded in
-[`src/engine/rules.ts`](../src/engine/rules.ts). Each value was checked against public
-sources (see below) in August 2026. **This is not tax advice**; it is a best-effort,
+This is the sourced reference for every figure hard-coded in the fiscal engines
+([`rules.ts`](../src/engine/rules.ts) for micro-entrepreneur, plus [`bareme.ts`](../src/engine/bareme.ts),
+[`particulier.ts`](../src/engine/particulier.ts) and [`societe.ts`](../src/engine/societe.ts) for
+the salaried-individual and SASU profiles). Each value was checked against public sources
+(see below) in August 2026. **This is not tax advice**; it is a best-effort,
 transparent model. If you spot an error, please open an issue or a PR — the
 whole point of TI'TIrelire is that the numbers are auditable.
 

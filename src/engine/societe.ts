@@ -167,6 +167,10 @@ export interface DividendComparison {
   recommended: DividendMode
   /** Net gain of the recommended mode vs the other (euros, >= 0). */
   netGain: number
+  /** Levy breakdown under the PFU (IS + flat tax) — sums to benefice − netPfu. */
+  pfuBreakdown: LineItem[]
+  /** Levy breakdown under the barème (IS + PS + IR) — sums to benefice − netBareme. */
+  baremeBreakdown: LineItem[]
   explanation: string
   warnings: Warning[]
 }
@@ -190,6 +194,27 @@ export function compareDividendes(raw: SocieteInput): DividendComparison {
   const irBareme = impotMarginal(base.input.autresRevenus, baseImposable, base.input.parts)
   const netBareme = round2(dividende - ps - irBareme)
 
+  // Levy breakdowns per option, so the UI can show one that reconciles with its net.
+  const pfuBreakdown = base.breakdown // [IS, PFU]
+  const baremeBreakdown: LineItem[] = [
+    base.is,
+    {
+      key: 'ps',
+      label: 'Prélèvements sociaux',
+      amount: ps,
+      base: dividende,
+      rate: PFU_PS,
+      detail: `17,2 % du dividende`,
+    },
+    {
+      key: 'ir_dividendes',
+      label: 'Impôt sur le revenu (barème)',
+      amount: irBareme,
+      base: baseImposable,
+      detail: `Barème sur le dividende après abattement 40 % et CSG déductible (6,8 %)`,
+    },
+  ]
+
   const baremeWins = netBareme > netPfu
   const recommended: DividendMode = baremeWins ? 'bareme' : 'pfu'
   const netGain = round2(Math.abs(netBareme - netPfu))
@@ -209,6 +234,8 @@ export function compareDividendes(raw: SocieteInput): DividendComparison {
     netBareme,
     recommended,
     netGain,
+    pfuBreakdown,
+    baremeBreakdown,
     explanation,
     warnings: [
       ...base.warnings,

@@ -168,16 +168,21 @@ describe('importCsvWithPreset', () => {
     expect(txs[0]).toMatchObject({ id: 'TX9', amount: 45.5, currency: 'EUR', source: 'sumup' })
   })
 
-  it('handles bank_fr edge amounts via the preset path', () => {
+  it('handles bank_fr edge amounts and skips blank separator rows', () => {
     const csv = [
       'Date;Libellé;Débit;Crédit',
-      '10/01/2026;Vide;;', // both empty → 0
+      '10/01/2026;--- sous-total ---;;', // both empty → skipped, not a 0 € income
       '11/01/2026;Signé;-800,00;', // already-signed debit → -800
       '12/01/2026;Gros;;1 234,56', // thousands-grouped credit
     ].join('\n')
     const txs = importCsvWithPreset(csv, 'bank_fr')
-    expect(txs.map((t) => t.amount)).toEqual([0, -800, 1234.56])
+    expect(txs.map((t) => t.amount)).toEqual([-800, 1234.56]) // blank row dropped
     expect(txs.every((t) => t.source === 'bank')).toBe(true)
+  })
+
+  it('rejects a non-numeric single-amount cell instead of booking a 0 € transaction', () => {
+    const csv = 'date,amount,label\n2026-01-10,N/A,Weird row'
+    expect(() => importCsv(csv, { date: 'date', amount: 'amount', label: 'label' })).toThrow(RangeError)
   })
 })
 

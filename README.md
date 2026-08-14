@@ -40,8 +40,10 @@ leaves your device.
 - 🔒 **Local-first** — runs entirely in the browser; nothing is sent anywhere.
 - 👥 **Multiple profiles** — micro-entrepreneur, salaried individual (income tax + PER
   optimisation), and single-shareholder company (SASU: IS + dividends, PFU vs barème).
-- 🧩 **Built on [publicodes](https://publi.codes)** — the open, explainable rule language
-  maintained by the French state (URSSAF), so the legal rules stay separate from the code.
+- 🧩 **publicodes for the micro rules** — the micro-entrepreneur module uses
+  [publicodes](https://publi.codes) (the open, explainable rule language maintained by the
+  French state / URSSAF), so its legal rules stay separate from the code. The other profiles
+  are plain TypeScript for now — unifying them on publicodes is on the roadmap.
 
 ## Getting started
 

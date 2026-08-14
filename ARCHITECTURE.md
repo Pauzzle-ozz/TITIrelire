@@ -81,15 +81,18 @@ sourced (see [`docs/parameters-2026.md`](./docs/parameters-2026.md)).
 ### Track B — Data connection
 
 1. **Canonical model + aggregation** — ✅ done.
-2. **CSV import + presets** — ✅ done (generic, Stripe, Qonto, PayPal, bank FR). Add more
-   presets (Shopify, SumUp, common CRMs) — each is just a mapping.
+2. **CSV import + presets** — ✅ done (generic, Stripe, Qonto, PayPal, bank FR, Shopify,
+   SumUp). Add more presets (common CRMs) — each is just a mapping.
 3. **Reference live connector (Stripe)** — ✅ done. `TransactionSource` port generalized.
 4. **Bank / Open Banking (DSP2)** via an aggregator — ✅ reference connector done
    (`BridgeConnector`, self-hosted). Add Powens and others behind the same port.
-5. **More payment/CRM connectors** — SumUp, Shopify, Dolibarr, HubSpot…
-6. **Factur-X import** — e-invoicing is mandatory in France (reception 2026-09, emission for
-   VSE/SME 2027-09); ingesting Factur-X is a strategic, well-timed source.
-7. **Optional self-hosted connector service** — manages OAuth for live sync, kept optional.
+5. **Self-hosted connector runner (CLI)** — ✅ done (`buildConnector` / `runConnector` /
+   `cliMain`): fetch a connector's transactions outside the browser → canonical JSON.
+6. **Factur-X import** — ✅ done (`parseFacturX` / `importFacturX`, CII XML). Strategic given
+   the mandate (reception 2026-09, emission VSE/SME 2027-09). Next: extract the XML from the
+   PDF/A-3 container; emission.
+7. **More payment/CRM connectors** — Powens, Dolibarr, HubSpot… behind the same port.
+8. **Optional hosted connector service** — managed OAuth for live sync, kept optional.
 
 ## Testing & workflow
 

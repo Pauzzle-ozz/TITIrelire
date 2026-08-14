@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Local-first web UI** (Vite): a live form → transparent, unfolded result, running entirely
   in the browser.
 - Sourced parameter reference in `docs/parameters-2026.md`.
-- 50 unit tests covering the engine, comparator, view-model and UI wiring.
+- A comprehensive unit-test suite covering the engine, comparator, view-model and UI wiring.
 
 - **Data connection layer** (`src/transactions`): a canonical `Transaction` model with
   validation/de-dup, `aggregateTurnover()` (transactions → CA), and

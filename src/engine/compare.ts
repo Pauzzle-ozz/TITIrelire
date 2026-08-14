@@ -93,6 +93,13 @@ export function compare(raw: CompareInput): Comparison {
       : `Avec ${winnerLabel}, vous conservez ${eur(netGain)} de plus qu’avec ${loserLabel} ` +
         `(impôt sur le revenu : ${eur(winner.incomeTax)} contre ${eur(loser.incomeTax)}).`
 
+  // Both options are displayed, so surface every option's caveats (deduped by code) —
+  // e.g. the VL eligibility condition must show even when the barème is recommended.
+  const seen = new Set<string>()
+  const warnings = [...baremeResult.warnings, ...vlResult.warnings].filter((w) =>
+    seen.has(w.code) ? false : (seen.add(w.code), true),
+  )
+
   return {
     input: baremeResult.input,
     bareme,
@@ -100,7 +107,6 @@ export function compare(raw: CompareInput): Comparison {
     recommended,
     netGain,
     explanation,
-    // Caveats attached to the recommended mode (e.g. VL eligibility, CFE exclusion).
-    warnings: winner.result.warnings,
+    warnings,
   }
 }

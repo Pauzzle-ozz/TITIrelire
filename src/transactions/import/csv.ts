@@ -160,6 +160,8 @@ export function parseAmount(value: string, decimal?: '.' | ','): number {
   }
   // Keep digits, separators and sign only (strips currency symbols, spaces).
   s = s.replace(/[^\d,.\-+]/g, '')
+  // A cell with no digit ("N/A", "-", currency-only) is not a number — do not launder to 0.
+  if (!/\d/.test(s)) return Number.NaN
 
   if (decimal === ',') {
     s = s.replace(/\./g, '').replace(',', '.')
@@ -275,8 +277,10 @@ export function importCsv(text: string, mapping: CsvMapping, options: CsvOptions
     if (amountCol !== undefined) {
       amount = parseAmount(cell(row, amountCol), options.decimal)
     } else {
-      const credit = creditCol !== undefined ? parseAmount(cell(row, creditCol), options.decimal) : 0
-      const debit = debitCol !== undefined ? parseAmount(cell(row, debitCol), options.decimal) : 0
+      const credit = creditCol !== undefined ? parseAmount(cell(row, creditCol), options.decimal) : Number.NaN
+      const debit = debitCol !== undefined ? parseAmount(cell(row, debitCol), options.decimal) : Number.NaN
+      // Both cells blank → a separator/subtotal row, not a transaction: skip it.
+      if (!Number.isFinite(credit) && !Number.isFinite(debit)) return []
       amount = (Number.isFinite(credit) ? credit : 0) - Math.abs(Number.isFinite(debit) ? debit : 0)
     }
 

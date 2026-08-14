@@ -3,7 +3,7 @@
  * feeds the tax engine. This is the bridge between the "data connection" layer and
  * the "simulation" layer — the payoff of importing transactions instead of typing a CA.
  */
-import type { AggregateOptions, Transaction, TurnoverSummary } from './types.js'
+import { direction, type AggregateOptions, type Transaction, type TurnoverSummary } from './types.js'
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100
@@ -39,8 +39,8 @@ export function aggregateTurnover(
       continue
     }
     transactionCount += 1
-    // A zero amount counts as income, consistent with direction() (amount >= 0).
-    if (tx.amount >= 0) {
+    // Sign convention lives in exactly one place: direction() (amount >= 0 → income).
+    if (direction(tx) === 'income') {
       revenue += tx.amount
       incomeCount += 1
     } else {

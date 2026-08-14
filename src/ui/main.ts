@@ -6,7 +6,7 @@
 // graph never references the connectors — secret-handling code cannot ship to the client.
 import { compare, type CompareInput } from '../engine/compare.js'
 import { comparePER, simulateParticulier, type ParticulierInput } from '../engine/particulier.js'
-import { compareDividendes, simulateSociete, type SocieteInput } from '../engine/societe.js'
+import { compareDividendes, type SocieteInput } from '../engine/societe.js'
 import type { ActivityType } from '../engine/types.js'
 import {
   toMicroViewModel,
@@ -82,8 +82,7 @@ function buildViewModel(profile: Profile): ViewModel {
     return toParticulierViewModel(simulateParticulier(input), comparePER(input))
   }
   if (profile === 'societe') {
-    const input = readSociete()
-    return toSocieteViewModel(simulateSociete(input), compareDividendes(input))
+    return toSocieteViewModel(compareDividendes(readSociete()))
   }
   return toMicroViewModel(compare(readMicro()))
 }
@@ -122,7 +121,7 @@ function renderBreakdown(vm: ViewModel): string {
     vm.effectiveRate === undefined
       ? ''
       : `<div class="line"><div class="row">
-          <span class="label">Taux de prélèvement effectif</span>
+          <span class="label">${escape(vm.effectiveRateLabel ?? 'Taux de prélèvement effectif')}</span>
           <span class="amount">${escape(vm.effectiveRate)}</span>
         </div></div>`
   return `<div class="card"><h2>Le détail, ligne par ligne</h2>${lines}${rate}</div>`
@@ -130,7 +129,7 @@ function renderBreakdown(vm: ViewModel): string {
 
 function renderWarnings(vm: ViewModel): string {
   if (vm.warnings.length === 0) return ''
-  const items = vm.warnings.map((w) => `<li class="${w.level}">${escape(w.message)}</li>`).join('')
+  const items = vm.warnings.map((w) => `<li class="${escape(w.level)}">${escape(w.message)}</li>`).join('')
   return `<div class="card"><h2>À garder en tête</h2><ul class="warnings">${items}</ul></div>`
 }
 

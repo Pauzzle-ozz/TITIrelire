@@ -172,4 +172,11 @@ describe('simulate/compare from transactions', () => {
     expect(comparison.recommended).toBe('versement_liberatoire')
     expect(comparison.netGain).toBe(748)
   })
+
+  it('refuses to tax non-EUR turnover (the engine is euro-only)', () => {
+    const usd = normalizeAll([{ id: 'u1', date: '2026-01-10', amount: 1000, currency: 'USD' }])
+    expect(() => simulateFromTransactions(usd, { activity: 'prestations_bnc', currency: 'USD' })).toThrow(
+      RangeError,
+    )
+  })
 })
