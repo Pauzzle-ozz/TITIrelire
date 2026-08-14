@@ -9,18 +9,13 @@
 import { compare, type CompareInput, type Comparison } from '../engine/compare.js'
 import { microThresholds } from '../engine/simulate.js'
 import type { IncomeTaxMode } from '../engine/types.js'
+import { eur, round2, sortAdvice } from './shared.js'
 import type { Advice } from './types.js'
+
+export { totalEstimatedGain } from './shared.js'
 
 /** Turnover fraction of a threshold above which we proactively warn. */
 const PROXIMITY = 0.9
-
-function round2(n: number): number {
-  return Math.round((n + Number.EPSILON) * 100) / 100
-}
-
-function eur(amount: number): string {
-  return `${round2(amount).toLocaleString('fr-FR')} €`
-}
 
 /** Net income under the recommended régime of a comparison. */
 function bestNet(c: Comparison): number {
@@ -128,28 +123,4 @@ export function adviseMicro(input: CompareInput): Advice[] {
   })
 
   return sortAdvice(advice)
-}
-
-const KIND_RANK: Record<Advice['kind'], number> = { optimisation: 0, alerte: 1, info: 2 }
-
-/** Orders optimisations → alertes → info, then by decreasing euro gain within a kind. */
-function sortAdvice(advice: Advice[]): Advice[] {
-  return [...advice].sort((a, b) => {
-    const byKind = KIND_RANK[a.kind] - KIND_RANK[b.kind]
-    if (byKind !== 0) return byKind
-    return (b.estimatedGain ?? 0) - (a.estimatedGain ?? 0)
-  })
-}
-
-/**
- * Indicative sum of the identified optimisation gains (euros/year). Levers can overlap, so
- * this is an upper-bound headline, not a guaranteed cumulative total — the UI should frame it
- * as "jusqu'à".
- */
-export function totalEstimatedGain(advice: Advice[]): number {
-  return round2(
-    advice
-      .filter((a) => a.kind === 'optimisation')
-      .reduce((sum, a) => sum + (a.estimatedGain ?? 0), 0),
-  )
 }
