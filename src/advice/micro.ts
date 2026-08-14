@@ -65,18 +65,30 @@ export function adviseMicro(input: CompareInput): Advice[] {
     }
   }
 
-  // 3 & 4. Threshold awareness (VAT franchise, micro ceiling).
-  const { plafondMicro, franchiseTVA } = microThresholds(input.activity)
+  // 3 & 4. Threshold awareness (VAT franchise: base + tolerance, micro ceiling).
+  const { plafondMicro, franchiseTVA, franchiseTVAMajoree } = microThresholds(input.activity)
   const revenue = input.revenue
 
-  if (revenue > franchiseTVA) {
+  if (revenue > franchiseTVAMajoree) {
     advice.push({
       id: 'tva-depassee',
       kind: 'alerte',
-      title: 'Seuil de franchise en base de TVA dépassé',
+      title: 'Seuil majoré de franchise TVA dépassé',
       detail:
-        `Votre chiffre d'affaires dépasse ${eur(franchiseTVA)} : la TVA devient probablement ` +
-        `applicable. Ce simulateur la suppose non due — vérifiez votre situation.`,
+        `Votre chiffre d'affaires dépasse le seuil majoré de ${eur(franchiseTVAMajoree)} : la ` +
+        `franchise cesse dès le mois de dépassement et la TVA devient due. Ce simulateur la ` +
+        `suppose non due — vérifiez votre situation.`,
+      ruleRef: 'micro . seuils . franchise TVA majorée',
+    })
+  } else if (revenue > franchiseTVA) {
+    advice.push({
+      id: 'tva-tolerance',
+      kind: 'alerte',
+      title: 'Zone de tolérance TVA',
+      detail:
+        `Votre CA dépasse le seuil de base (${eur(franchiseTVA)}) mais reste sous le seuil majoré ` +
+        `(${eur(franchiseTVAMajoree)}) : la franchise est conservée cette année, mais perdue si le ` +
+        `dépassement se répète l'an prochain.`,
       ruleRef: 'micro . seuils . franchise TVA',
     })
   } else if (revenue >= PROXIMITY * franchiseTVA) {
@@ -85,8 +97,8 @@ export function adviseMicro(input: CompareInput): Advice[] {
       kind: 'alerte',
       title: 'Vous approchez le seuil de franchise TVA',
       detail:
-        `À ${eur(franchiseTVA - revenue)} du seuil de ${eur(franchiseTVA)}. Au-delà, vous devrez ` +
-        `facturer la TVA — anticipez.`,
+        `À ${eur(franchiseTVA - revenue)} du seuil de ${eur(franchiseTVA)}. Au-delà, vous entrez ` +
+        `dans la zone de tolérance puis la TVA — anticipez.`,
       ruleRef: 'micro . seuils . franchise TVA',
     })
   }

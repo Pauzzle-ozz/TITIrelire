@@ -215,9 +215,21 @@ micro . seuils . franchise TVA:
       alors: 85000
     - sinon: 37500
 
+# Seuil majoré (de tolérance) : au-dessus, la franchise cesse dès le mois de dépassement ;
+# entre le seuil de base et le majoré, elle est conservée l'année en cours.
+micro . seuils . franchise TVA majorée:
+  titre: Seuil majoré de franchise en base de TVA
+  variations:
+    - si: micro . activité = 'vente'
+      alors: 93500
+    - sinon: 41250
+
 micro . seuils . dépassement plafond:
   valeur: micro . CA > micro . seuils . plafond micro
 
 micro . seuils . dépassement franchise TVA:
   valeur: micro . CA > micro . seuils . franchise TVA
+
+micro . seuils . dépassement franchise TVA majorée:
+  valeur: micro . CA > micro . seuils . franchise TVA majorée
 `

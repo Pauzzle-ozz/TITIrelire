@@ -4,12 +4,20 @@ import { microThresholds } from '../src/engine/simulate.js'
 
 describe('microThresholds', () => {
   it('returns the sales ceilings for vente de marchandises', () => {
-    expect(microThresholds('vente_marchandises')).toEqual({ plafondMicro: 203100, franchiseTVA: 85000 })
+    expect(microThresholds('vente_marchandises')).toEqual({
+      plafondMicro: 203100,
+      franchiseTVA: 85000,
+      franchiseTVAMajoree: 93500,
+    })
   })
 
   it('returns the services ceilings for BNC/BIC/liberal activities', () => {
     for (const activity of ['prestations_bic', 'prestations_bnc', 'liberal_cipav'] as const) {
-      expect(microThresholds(activity)).toEqual({ plafondMicro: 83600, franchiseTVA: 37500 })
+      expect(microThresholds(activity)).toEqual({
+        plafondMicro: 83600,
+        franchiseTVA: 37500,
+        franchiseTVAMajoree: 41250,
+      })
     }
   })
 

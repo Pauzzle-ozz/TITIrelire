@@ -263,8 +263,10 @@ export function simulate(raw: SimulationInput): SimulationResult {
 export interface MicroThresholds {
   /** Turnover ceiling above which the micro régime no longer applies. */
   plafondMicro: number
-  /** Turnover ceiling of the VAT franchise en base (below it, no VAT is charged). */
+  /** Base VAT-franchise threshold (below it, no VAT is charged). */
   franchiseTVA: number
+  /** Higher tolerance VAT threshold: above it, the franchise stops mid-year. */
+  franchiseTVAMajoree: number
 }
 
 /**
@@ -282,5 +284,6 @@ export function microThresholds(activity: ActivityType): MicroThresholds {
   return {
     plafondMicro: round2(evNumber('micro . seuils . plafond micro')),
     franchiseTVA: round2(evNumber('micro . seuils . franchise TVA')),
+    franchiseTVAMajoree: round2(evNumber('micro . seuils . franchise TVA majorée')),
   }
 }

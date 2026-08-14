@@ -43,8 +43,14 @@ describe('adviseMicro — ACRE', () => {
 })
 
 describe('adviseMicro — thresholds', () => {
-  it('warns when VAT franchise is exceeded (services)', () => {
-    const advice = adviseMicro(base({ revenue: 40000 })) // > 37 500 franchise services
+  it('warns (tolerance) between base and majoré VAT thresholds (services)', () => {
+    const advice = adviseMicro(base({ revenue: 40000 })) // 37 500 < 40 000 < 41 250
+    expect(byId(advice, 'tva-tolerance')?.kind).toBe('alerte')
+    expect(byId(advice, 'tva-depassee')).toBeUndefined()
+  })
+
+  it('warns (dépassé) above the majoré VAT threshold (services)', () => {
+    const advice = adviseMicro(base({ revenue: 45000 })) // > 41 250 majoré
     expect(byId(advice, 'tva-depassee')?.kind).toBe('alerte')
   })
 

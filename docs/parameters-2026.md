@@ -81,9 +81,12 @@ services would be 0.10 %. This is surfaced in the line-item detail.
 | Sale of goods / accommodation | **203 100 €** | **85 000 €** | 93 500 € |
 | Services / liberal | **83 600 €** | **37 500 €** | 41 250 € |
 
-Only the **micro ceiling** and the **VAT franchise base** are modelled in `rules.ts` (they
-drive the threshold warnings). The **VAT tolerance** (seuil majoré) column is context only —
-not modelled in V1 (see the scope note above).
+The **micro ceiling**, the **VAT franchise base** and the **VAT tolerance** (seuil majoré) are
+all modelled in `rules.ts` and exposed by `microThresholds()`. The advice layer warns in three
+tiers: proximity to the base, the tolerance zone (base < CA ≤ majoré, franchise kept the current
+year), and above the majoré (franchise lost mid-year). Sources: [economie.gouv — franchise
+TVA](https://www.economie.gouv.fr/entreprises/gerer-sa-fiscalite-et-ses-impots/autres-impots-et-taxes/entreprises-pouvez-vous-beneficier-de-la-franchise-de-tva),
+[impots.gouv — régimes TVA](https://www.impots.gouv.fr/professionnel/les-regimes-dimposition-la-tva).
 
 The unified 25 000 € VAT threshold debated in 2025 was abandoned (loi n° 2025-1044 of
 2025-11-03); the activity-based thresholds remain.
