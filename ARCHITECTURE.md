@@ -57,9 +57,12 @@ from drifting apart.
   the correct CA. It reads the canonical `Transaction` and stays independent of the engine.
 - **App shell** — a multi-page UI: a backend-free hash router (`src/ui/router.ts`) shows one
   `[data-page]` at a time (accueil/espace/situation/transactions/résultats) with a sidebar nav
-  and a home dashboard (`dashboard-render.ts`). Progressive enhancement: without JS the pages
-  stack; the router (opt-in, gated on `#app-shell`) enhances them into an SPA. Every panel id
-  is preserved, so the vault/transactions/advice controllers plug in unchanged.
+  and a home dashboard (`dashboard-render.ts`). It is **gated**: until a space is unlocked the
+  router forces the connection screen and hides the other nav (`.app.locked`); unlocking a
+  space opens the app, locking/switching re-gates it. **No invented data** — the form ships
+  empty and the app computes nothing (honest empty state) until the user enters their real
+  headline figure. Progressive enhancement: without JS the pages stack; the router (opt-in on
+  `#app-shell`) enhances them into an SPA. Every panel id is preserved.
 - **UI** — a local-first web app (Vite). A pure view-model + `render.ts` turn engine results
   into the transparent, line-by-line view; the DOM wiring lives in `main.ts`. The **pixel-art
   rabbit** (`src/ui/sprite`) — pixelated from the owner's own photo — is the logo, favicon and
