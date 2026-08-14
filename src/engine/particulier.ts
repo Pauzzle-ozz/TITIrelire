@@ -27,6 +27,8 @@ export interface ParticulierInput {
   perContribution?: number
   /** Other net taxable household income added before the scale. Default 0. */
   autresRevenus?: number
+  /** Couple (married/pacsé, joint filing) — sets the base parts to 2 for décote/plafonnement. Default false. */
+  couple?: boolean
 }
 
 export interface ParticulierInputNormalized {
@@ -35,6 +37,7 @@ export interface ParticulierInputNormalized {
   fraisReels: number | undefined
   perContribution: number
   autresRevenus: number
+  couple: boolean
 }
 
 export interface ParticulierResult {
@@ -80,6 +83,7 @@ export function normalizeParticulier(raw: ParticulierInput): ParticulierInputNor
     fraisReels: raw.fraisReels,
     perContribution: per,
     autresRevenus: autres,
+    couple: raw.couple ?? false,
   }
 }
 
@@ -116,7 +120,7 @@ export function simulateParticulier(raw: ParticulierInput): ParticulierResult {
   const taxableIncome = round2(input.autresRevenus + salaryTaxable)
   // Marginal income tax attributable to the salary given the household's other income, so
   // netAfterTax stays meaningful even when the other income dominates.
-  const incomeTax = impotMarginal(input.autresRevenus, salaryTaxable, input.parts)
+  const incomeTax = impotMarginal(input.autresRevenus, salaryTaxable, input.parts, input.couple ? 2 : 1)
   const netAfterTax = round2(salaire - incomeTax)
   const effectiveRate = salaire > 0 ? Math.round((incomeTax / salaire) * 10000) / 10000 : 0
 

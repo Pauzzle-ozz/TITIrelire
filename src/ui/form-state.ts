@@ -12,12 +12,18 @@ import type { ProfileInputs, VaultProfile } from '../vault/types.js'
 /** Field ids per profile, mirroring index.html. Checkboxes are listed in {@link CHECKBOX_IDS}. */
 export const FIELD_IDS: Record<VaultProfile, readonly string[]> = {
   micro: ['activity', 'revenue', 'parts', 'other', 'acre', 'acreReduced'],
-  particulier: ['p-salaire', 'p-parts', 'p-frais', 'p-per', 'p-autres'],
-  societe: ['s-benefice', 's-dividendes', 's-parts', 's-autres', 's-reduced'],
+  particulier: ['p-salaire', 'p-parts', 'p-frais', 'p-per', 'p-autres', 'p-couple'],
+  societe: ['s-benefice', 's-dividendes', 's-parts', 's-autres', 's-reduced', 's-couple'],
 }
 
 /** Ids whose value is a boolean (checkbox), not a string. */
-export const CHECKBOX_IDS: ReadonlySet<string> = new Set(['acre', 'acreReduced', 's-reduced'])
+export const CHECKBOX_IDS: ReadonlySet<string> = new Set([
+  'acre',
+  'acreReduced',
+  's-reduced',
+  'p-couple',
+  's-couple',
+])
 
 /** Reads the profile currently selected in the `#profile` dropdown (defaults to `micro`). */
 export function readActiveProfile(doc: Document): VaultProfile {

@@ -61,6 +61,12 @@ function optNum(id: string): number | undefined {
   return raw === '' ? undefined : Number(raw)
 }
 
+/** Reads a checkbox that may be absent (tolerant): missing → false. */
+function optChecked(id: string): boolean {
+  const node = document.getElementById(id) as HTMLInputElement | null
+  return node?.checked ?? false
+}
+
 function readMicro(): CompareInput {
   return {
     activity: el<HTMLSelectElement>('activity').value as ActivityType,
@@ -80,6 +86,7 @@ function readParticulier(): ParticulierInput {
     ...(frais !== undefined ? { fraisReels: frais } : {}),
     perContribution: num('p-per'),
     autresRevenus: num('p-autres'),
+    couple: optChecked('p-couple'),
   }
 }
 
@@ -91,6 +98,7 @@ function readSociete(): SocieteInput {
     ...(dividendes !== undefined ? { dividendes } : {}),
     parts: num('s-parts'),
     autresRevenus: num('s-autres'),
+    couple: optChecked('s-couple'),
   }
 }
 

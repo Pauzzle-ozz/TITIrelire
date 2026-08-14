@@ -74,11 +74,17 @@ describe('simulateParticulier — income tax on salary', () => {
     expect(r.netAfterTax).toBe(29200)
   })
 
-  it('applies the quotient familial (parts > 1 lowers the tax)', () => {
+  it('applies the quotient familial with plafonnement (single, 2 parts)', () => {
     const r = simulateParticulier({ salaireNetImposable: 80000, parts: 2 })
     expect(r.taxableSalary).toBe(72000)
-    expect(r.incomeTax).toBe(7807.98)
+    // A single filer with 2 parts: the QF advantage is capped (plafonnement).
+    expect(r.incomeTax).toBe(11089.99)
     expect(r.incomeTax).toBeLessThan(simulateParticulier({ salaireNetImposable: 80000 }).incomeTax)
+  })
+
+  it('does not cap the QF for a couple (base parts = 2)', () => {
+    const r = simulateParticulier({ salaireNetImposable: 80000, parts: 2, couple: true })
+    expect(r.incomeTax).toBe(7807.98) // no plafonnement → lower than the single case
   })
 })
 

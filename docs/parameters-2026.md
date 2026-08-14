@@ -105,6 +105,19 @@ Per household part, after the quotient familial:
 
 Set by the loi de finances 2026, indexed +0.9 % on inflation.
 
+**Décote** (`impotBareme`): tax − max(0, plafond − 45,25 % × tax), with plafond **897 €** (single)
+/ **1 483 €** (couple). Verified against the official economie.gouv example (couple, IR 2 250 €
+→ décote 465 € → 1 785 €). **Plafonnement du quotient familial**: the QF advantage above the base
+parts (1 single / 2 couple) is capped at **1 807 € per extra half-part**. Both take a `baseParts`
+(single/couple) argument; the salaried and company profiles expose a **couple** toggle for it.
+Out of scope (honest limits): the parent-isolé enhanced first-part cap, other special QF cases,
+and reductions/credits. **Known limitation**: the micro module computes household IR via
+publicodes and reports the activity's *marginal* contribution — it does **not** yet apply the
+décote/plafonnement (a unification item, see ARCHITECTURE.md). Sources: [BOFiP — barème IR
+2026](https://bofip.impots.gouv.fr/bofip/14954-PGP.html/ACTU-2026-00022), [economie.gouv —
+décote](https://www.economie.gouv.fr/particuliers/impots-et-fiscalite/gerer-mon-impot-sur-le-revenu/pouvez-vous-beneficier-de-la-decote-de-limpot-sur-le-revenu),
+[BOFiP — plafonnement QF](https://bofip.impots.gouv.fr/bofip/2494-PGP.html/identifiant=BOI-IR-LIQ-20-20-20-20260407).
+
 ## Salaried individual (income tax)
 
 | Parameter | Value |

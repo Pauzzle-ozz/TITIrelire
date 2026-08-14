@@ -70,12 +70,17 @@ describe('compareDividendes — PFU vs barème (with CSG déductible)', () => {
     expect(c.explanation).toContain('même net')
   })
 
-  it('applies the quotient familial in the barème option (parts > 1)', () => {
+  it('applies the quotient familial with plafonnement in the barème option (single, 2 parts)', () => {
     const c = compareDividendes({ benefice: 100000, autresRevenus: 100000, parts: 2 })
     expect(c.netPfu).toBe(55475)
-    expect(c.netBareme).toBe(52970.7)
+    expect(c.netBareme).toBe(48332.99) // single with 2 parts → QF advantage capped
     expect(c.recommended).toBe('pfu')
-    expect(c.netGain).toBe(2504.3)
+    expect(c.netGain).toBe(7142.01)
+  })
+
+  it('does not cap the QF for a couple in the barème option (base parts = 2)', () => {
+    const c = compareDividendes({ benefice: 100000, autresRevenus: 100000, parts: 2, couple: true })
+    expect(c.netBareme).toBe(52970.7) // no plafonnement → higher net than the single case
   })
 
   it('surfaces the CSG-déductible approximation caveat', () => {

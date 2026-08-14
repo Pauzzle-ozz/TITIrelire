@@ -46,6 +46,8 @@ export interface SocieteInput {
   parts?: number
   /** Other net taxable household income, for the barème option. Default 0. */
   autresRevenus?: number
+  /** Couple (joint filing) — base parts 2 for décote/plafonnement in the barème option. Default false. */
+  couple?: boolean
 }
 
 export interface SocieteInputNormalized {
@@ -54,6 +56,7 @@ export interface SocieteInputNormalized {
   dividendes: number
   parts: number
   autresRevenus: number
+  couple: boolean
 }
 
 export interface SocieteResult {
@@ -86,7 +89,14 @@ export function normalizeSociete(raw: SocieteInput): SocieteInputNormalized {
   const resultatNet = round2(raw.benefice - is)
   const dividende = raw.dividendes ?? Math.max(0, resultatNet)
   if (!Number.isFinite(dividende) || dividende < 0) throw new RangeError('dividendes must be >= 0')
-  return { benefice: raw.benefice, reducedRateEligible, dividendes: dividende, parts, autresRevenus: autres }
+  return {
+    benefice: raw.benefice,
+    reducedRateEligible,
+    dividendes: dividende,
+    parts,
+    autresRevenus: autres,
+    couple: raw.couple ?? false,
+  }
 }
 
 /** Runs an IS + dividend (PFU) simulation for a SASU. */
@@ -191,7 +201,7 @@ export function compareDividendes(raw: SocieteInput): DividendComparison {
   // following year — surfaced as an info warning).
   const csgDeductible = round2(dividende * CSG_DEDUCTIBLE)
   const baseImposable = round2(dividende * (1 - DIVIDEND_ABATTEMENT) - csgDeductible)
-  const irBareme = impotMarginal(base.input.autresRevenus, baseImposable, base.input.parts)
+  const irBareme = impotMarginal(base.input.autresRevenus, baseImposable, base.input.parts, base.input.couple ? 2 : 1)
   const netBareme = round2(dividende - ps - irBareme)
 
   // Levy breakdowns per option, so the UI can show one that reconciles with its net.
