@@ -40,6 +40,12 @@ from drifting apart.
   feeds the engine (`simulateFromTransactions` / `compareFromTransactions`).
   - **Importers** parse files/exports (CSV done — universal, local-first).
   - **Connectors** (`TransactionSource`) pull from live APIs (Stripe done, as the reference).
+- **UI** — a local-first web app (Vite). A pure view-model + `render.ts` turn engine results
+  into the transparent, line-by-line view; the DOM wiring lives in `main.ts`. The **pixel-art
+  lionhead rabbit** (`src/ui/sprite`) is the logo, favicon and boot loading animation —
+  deterministic sprite data with a pure SVG renderer and a reduced-motion-aware animator. The
+  browser imports the engine directly, so connectors (and their secrets) can never ship to the
+  client — enforced by a boundary test that scans every `src/ui` module.
 
 ## The local-first vs live-connectors tension
 

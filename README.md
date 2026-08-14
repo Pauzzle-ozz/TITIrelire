@@ -106,7 +106,9 @@ npm run typecheck  # type-check the project
 | `src/engine/rules.ts` | publicodes rule base (2026 fiscal parameters) |
 | `src/engine/simulate.ts` | `simulate()` — transparent, explained result |
 | `src/engine/compare.ts` | `compare()` — the optimisation recommendation |
-| `src/ui/` | local-first web UI (view-model + DOM wiring) |
+| `src/ui/` | local-first web UI: rabbit mascot (logo + loading), pure view-model + render, DOM wiring |
+| `src/ui/sprite/` | pixel-art lionhead rabbit — sprite data, SVG renderer, loading animator |
+| `tools/rabbit-studio.mjs` | dev tool that draws the mascot and previews it as PNG (zero-dep) |
 | `docs/parameters-2026.md` | sourced reference for every figure |
 
 ## Contributing
