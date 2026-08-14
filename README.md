@@ -38,6 +38,9 @@ leaves your device.
 - 🧮 **Accurate & auditable** — 2026 parameters, checked against public sources and
   documented in [`docs/parameters-2026.md`](./docs/parameters-2026.md).
 - 🔒 **Local-first** — runs entirely in the browser; nothing is sent anywhere.
+- 🗄️ **Personal space (optional)** — save your inputs and imported transactions so you don't
+  re-type them. The data is encrypted on your device with a master password (AES-256-GCM);
+  it never leaves the machine, and losing the password means it's unrecoverable.
 - 👥 **Multiple profiles** — micro-entrepreneur, salaried individual (income tax + PER
   optimisation), and single-shareholder company (SASU: IS + dividends, PFU vs barème).
 - 🧩 **publicodes for the micro rules** — the micro-entrepreneur module uses
@@ -107,6 +110,8 @@ npm run typecheck  # type-check the project
 | `src/engine/simulate.ts` | `simulate()` — transparent, explained result |
 | `src/engine/compare.ts` | `compare()` — the optimisation recommendation |
 | `src/ui/` | local-first web UI: rabbit mascot (logo + loading), pure view-model + render, DOM wiring |
+| `src/vault/` | optional encrypted personal space: AES-GCM store, storage port, open/save/migrate |
+| `src/transactions/` | canonical transaction model, aggregation, importers (CSV/Factur-X), connectors |
 | `src/ui/sprite/` | pixel-art rabbit — sprite data (pixelated from the owner's photo) + pure SVG renderer |
 | `tools/rabbit-from-cutout.mjs` | dev tool that pixelates a cut-out photo into the sprite (zero-dep) |
 | `docs/parameters-2026.md` | sourced reference for every figure |

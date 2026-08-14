@@ -40,6 +40,14 @@ from drifting apart.
   feeds the engine (`simulateFromTransactions` / `compareFromTransactions`).
   - **Importers** parse files/exports (CSV done — universal, local-first).
   - **Connectors** (`TransactionSource`) pull from live APIs (Stripe done, as the reference).
+- **Personal space (vault)** — an optional, encrypted local store (`src/vault`) so the user
+  keeps their data across sessions without re-typing. The whole state (saved form inputs per
+  profile + imported transactions) is serialized and encrypted as **one AES-256-GCM blob**,
+  the key derived from a **master password** (PBKDF2-SHA256). Nothing secret is stored and
+  nothing leaves the device. A small `VaultStorage` port (in-memory / `localStorage` today,
+  IndexedDB or a Tauri/OS-keychain store tomorrow) holds the blob; `Vault.open/save` +
+  `migrate()` (schema-versioned) tie it together. The UI panel is **opt-in**: no `#vault`
+  container → the simulator runs stateless and secret-free, as before.
 - **UI** — a local-first web app (Vite). A pure view-model + `render.ts` turn engine results
   into the transparent, line-by-line view; the DOM wiring lives in `main.ts`. The **pixel-art
   rabbit** (`src/ui/sprite`) — pixelated from the owner's own photo — is the logo, favicon and
@@ -99,6 +107,23 @@ sourced (see [`docs/parameters-2026.md`](./docs/parameters-2026.md)).
    PDF/A-3 container; emission.
 7. **More payment/CRM connectors** — Powens, Dolibarr, HubSpot… behind the same port.
 8. **Optional hosted connector service** — managed OAuth for live sync, kept optional.
+
+### Track C — Personal space & intelligence
+
+The move from a stateless simulator to a fiscal copilot, on top of Tracks A & B:
+
+1. **Encrypted local vault** — ✅ done (`src/vault`): master-password AES-GCM store, opt-in
+   UI panel with prefill + autosave. The foundation the rest of this track writes into.
+2. **Guided data entry & connection UX** — a form-first onboarding and a one-click connect
+   flow over the existing importers/connectors, feeding transactions straight into the vault.
+3. **Income/expense classification (pro vs perso)** — a transparent cascade (deterministic
+   rules → heuristics → local learning of user corrections), each decision explainable and
+   editable. The "smart" core.
+4. **Advice engine** — from a profile, edit the charges due *and* surface chiffré, rule-traced
+   optimisations (PER, régime, VAT thresholds, dividende arbitrage). Posture: information &
+   transparent simulation, not prescriptive advice (clear "not a substitute for an expert").
+5. **Desktop app (Tauri)** — package the whole thing as a one-click installer; connectors and
+   their secrets move into the Rust layer, resolving the local-first vs live-secrets tension.
 
 ## Testing & workflow
 
