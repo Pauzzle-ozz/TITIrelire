@@ -11,6 +11,9 @@ import { comparePER, simulateParticulier, type ParticulierInput } from '../engin
 import { compareDividendes, type SocieteInput } from '../engine/societe.js'
 import type { ActivityType } from '../engine/types.js'
 import { adviseMicro } from '../advice/micro.js'
+import { adviseParticulier } from '../advice/particulier.js'
+import { adviseSociete } from '../advice/societe.js'
+import type { Advice } from '../advice/types.js'
 import { renderAdvice } from './advice-render.js'
 import { applyForm, readForm } from './form-state.js'
 import { INVALID_INPUT_HTML, renderResult } from './render.js'
@@ -105,14 +108,21 @@ function toggleFields(profile: Profile): void {
   }
 }
 
+/** Computes transparent advice for the selected profile. */
+function adviceFor(profile: Profile): Advice[] {
+  if (profile === 'particulier') return adviseParticulier(readParticulier())
+  if (profile === 'societe') return adviseSociete(readSociete())
+  return adviseMicro(readMicro())
+}
+
 /**
- * Renders transparent advice for the micro profile into the optional `#advice` region.
- * No-op when the region is absent (e.g. minimal test DOMs) or the profile is not micro.
+ * Renders transparent advice for the selected profile into the optional `#advice` region.
+ * No-op when the region is absent (e.g. minimal test DOMs).
  */
 function renderAdviceRegion(profile: Profile): void {
   const region = document.getElementById('advice')
   if (region === null) return
-  region.innerHTML = profile === 'micro' ? renderAdvice(adviseMicro(readMicro())) : ''
+  region.innerHTML = renderAdvice(adviceFor(profile))
 }
 
 /** Reads the form, computes, and renders the result (or an inline validation message). */

@@ -68,10 +68,12 @@ describe('UI wiring (happy-dom)', () => {
     expect(advice.innerHTML).toContain('ne remplace pas un expert-comptable')
   })
 
-  it('clears the advice region when leaving the micro profile', async () => {
+  it('renders advice for the salaried and company profiles too', async () => {
     await import('../src/ui/main.js')
     switchProfile('particulier')
-    expect(document.getElementById('advice')!.innerHTML).toBe('')
+    expect(document.getElementById('advice')!.innerHTML).toContain('PER')
+    switchProfile('societe')
+    expect(document.getElementById('advice')!.innerHTML).toContain('dividende')
   })
 
   it('switches to the salaried profile and shows the PER optimisation', async () => {
