@@ -42,8 +42,8 @@ from drifting apart.
   - **Connectors** (`TransactionSource`) pull from live APIs (Stripe done, as the reference).
 - **UI** — a local-first web app (Vite). A pure view-model + `render.ts` turn engine results
   into the transparent, line-by-line view; the DOM wiring lives in `main.ts`. The **pixel-art
-  lionhead rabbit** (`src/ui/sprite`) is the logo, favicon and boot loading animation —
-  deterministic sprite data with a pure SVG renderer and a reduced-motion-aware animator. The
+  rabbit** (`src/ui/sprite`) — pixelated from the owner's own photo — is the logo, favicon and
+  loading animation (a CSS hop, disabled under reduced motion), drawn by a pure SVG renderer. The
   browser imports the engine directly, so connectors (and their secrets) can never ship to the
   client — enforced by a boundary test that scans every `src/ui` module.
 

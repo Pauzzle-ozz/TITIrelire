@@ -24,8 +24,8 @@ function read(rel: string): string {
 
 describe('browser/connector boundary', () => {
   it('discovers the UI modules to guard', () => {
-    expect(uiFiles.length).toBeGreaterThanOrEqual(5)
-    for (const expected of ['main.ts', 'view-model.ts', 'render.ts', 'sprite/rabbit.ts', 'sprite/animator.ts']) {
+    expect(uiFiles.length).toBeGreaterThanOrEqual(4)
+    for (const expected of ['main.ts', 'view-model.ts', 'render.ts', 'sprite/rabbit.ts']) {
       expect(uiFiles).toContain(expected)
     }
   })

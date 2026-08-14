@@ -107,8 +107,8 @@ npm run typecheck  # type-check the project
 | `src/engine/simulate.ts` | `simulate()` — transparent, explained result |
 | `src/engine/compare.ts` | `compare()` — the optimisation recommendation |
 | `src/ui/` | local-first web UI: rabbit mascot (logo + loading), pure view-model + render, DOM wiring |
-| `src/ui/sprite/` | pixel-art lionhead rabbit — sprite data, SVG renderer, loading animator |
-| `tools/rabbit-studio.mjs` | dev tool that draws the mascot and previews it as PNG (zero-dep) |
+| `src/ui/sprite/` | pixel-art rabbit — sprite data (pixelated from the owner's photo) + pure SVG renderer |
+| `tools/rabbit-from-cutout.mjs` | dev tool that pixelates a cut-out photo into the sprite (zero-dep) |
 | `docs/parameters-2026.md` | sourced reference for every figure |
 
 ## Contributing

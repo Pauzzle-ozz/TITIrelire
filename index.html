@@ -197,16 +197,18 @@
       }
       .splash.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
       .splash-rabbit { width: min(46vw, 176px); }
-      .splash-rabbit .rabbit { width: 100%; height: auto; display: block; animation: hop 0.85s ease-in-out infinite; }
+      .splash-rabbit .rabbit { width: 100%; height: auto; display: block; transform-origin: 50% 100%; animation: hop 0.9s cubic-bezier(0.3, 0, 0.2, 1) infinite; }
       .splash-word {
         font-family: var(--font-mono); font-weight: 700; font-size: 1.35rem;
         letter-spacing: -0.02em; margin: 0.4rem 0 0; color: var(--ink);
       }
       .splash-tag { margin: 0; color: var(--muted); font-size: 0.9rem; }
       @keyframes hop {
-        0%, 100% { transform: translateY(0); }
-        30% { transform: translateY(-11%); }
-        55% { transform: translateY(0); }
+        0%, 100% { transform: translateY(0) scaleY(1); }
+        12% { transform: translateY(0) scaleY(0.9); }   /* crouch */
+        42% { transform: translateY(-18%) scaleY(1.06); } /* airborne, stretch */
+        68% { transform: translateY(0) scaleY(0.94); }  /* land, squash */
+        84% { transform: translateY(0) scaleY(1); }
       }
 
       /* ── Responsive ────────────────────────────────────────────────────────── */

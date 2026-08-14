@@ -49,7 +49,7 @@ async function boot(): Promise<void> {
 describe('backend↔frontend integration — the DOM equals the engine (étanchéité)', () => {
   beforeEach(() => {
     vi.resetModules()
-    vi.useFakeTimers() // freeze splash/animator timers; we only assert rendered output
+    vi.useFakeTimers() // freeze the splash-hide timer; we only assert rendered output
     installIndexDom()
   })
   afterEach(() => {

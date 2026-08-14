@@ -47,10 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shared 2026 income-tax scale (`impotBareme` / `impotMarginal`) reused across profiles.
 - **Local UI now covers all three profiles** via a profile selector (micro-entrepreneur,
   salaried individual, SASU), each with its transparent breakdown and optimisation comparison.
-- **Pixel-art lionhead rabbit mascot** — the app's logo, favicon and boot loading animation.
-  Drawn as deterministic sprite *data* (a pixel matrix + pure SVG renderer) with a frame
-  animator that pauses under `prefers-reduced-motion`; authored/previewed via
-  `tools/rabbit-studio.mjs` (a zero-dependency dev tool that also rasterises frames to PNG).
+- **Pixel-art rabbit mascot** — the app's logo, favicon and loading animation, **pixelated from
+  the owner's own (background-removed) photo** so it is faithfully *that* rabbit. Deterministic
+  sprite data (a pixel matrix) + a pure SVG renderer; the loading "hop" is CSS, disabled under
+  `prefers-reduced-motion`. Produced by `tools/rabbit-from-cutout.mjs` (zero-dependency dev tool).
 - **Rebuilt local-first frontend** — an accessible, responsive "pixel-computed ledger" theme
   (tabular/mono numerals, hairline rules, reduced-motion support), a boot splash, and a pure,
   XSS-safe render layer (`src/ui/render.ts`) separated from the DOM wiring.

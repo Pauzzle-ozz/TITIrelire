@@ -1,109 +1,101 @@
 /**
- * TITI'relire mascot — a dwarf *lionhead* rabbit in profile, facing left (erect ear,
- * fluffy mane), drawn to match the owner's photo. It is the app's logo, favicon and the
- * frame source for the loading animation.
+ * TITI'relire mascot — the owner's own dwarf rabbit, in profile (facing right, both ears up,
+ * the sable-and-cream broken coat). It is the app's logo, favicon and loading animation.
  *
- * The art is *data*: a pixel matrix of palette keys, kept deterministic and DOM-free so it
- * renders identically on the server, in the browser and in tests. The matrices were
- * authored with `tools/rabbit-studio.mjs` (a dev-only tool that also rasterises them to PNG
- * for visual review) and frozen here as the single source of truth.
+ * The art is *data*: a pixel matrix of palette keys. It was produced by pixelating the
+ * owner's background-removed photo (`tools/rabbit-from-cutout.mjs` — the alpha channel is the
+ * mask, so it is a faithful, deterministic downsample, not a redrawing) and frozen here as the
+ * single source of truth. The raw photo is not committed; only this derived matrix ships.
  *
- * Rendering is pure: {@link renderRabbitSVG} turns a frame into a crisp, scalable SVG string
+ * Rendering is pure: {@link renderRabbitSVG} turns the matrix into a crisp, scalable SVG string
  * by merging equal horizontal pixels into run-length `<rect>`s (compact, no anti-alias seams).
+ * The loading "hop" is CSS (see the app stylesheet), disabled under `prefers-reduced-motion`.
  */
 
 /** Sprite dimensions, in pixels. */
-export const RABBIT_W = 32
-export const RABBIT_H = 30
+export const RABBIT_W = 72
+export const RABBIT_H = 47
 
 /**
  * Palette: single-char key → CSS colour. `'.'` is transparent and never emitted.
- * Sampled from the photo: warm whites, fauve tans, warm browns, a dark eye, a dusty nose.
+ * A muted sable/marten range (greyish warm browns) plus cream, sampled from the photo.
  */
 export const RABBIT_PALETTE: Readonly<Record<string, string>> = {
-  D: '#3a2b1f', // outline (soft dark brown)
-  B: '#8f5c34', // brown  (fauve foncé — back / brow / ear)
-  T: '#c08a56', // tan    (fauve — main patches)
-  t: '#ddb98a', // light tan (mane highlights)
-  W: '#f7f3ea', // warm white (face / body)
-  w: '#e6ddcb', // shadow white (underside)
-  E: '#241c15', // eye
-  G: '#ffffff', // eye glint
-  N: '#cf8f88', // nose (dusty pink)
-  P: '#eeb8b0', // inner ear (pale pink)
+  W: '#ece5d7', // cream highlight
+  w: '#d8ccb8', // cream in shadow
+  s: '#bdae98', // grey-cream transition
+  t: '#a89a80', // light taupe
+  T: '#877360', // taupe-brown
+  B: '#655442', // brown
+  D: '#423427', // deep brown (ear rim / deep shadow)
+  E: '#241b14', // darkest fur / eye
 }
 
 /** Transparent key — skipped by the renderer. */
 export const TRANSPARENT = '.'
 
-// Base frame: the neutral portrait. Every row is exactly RABBIT_W chars.
+// The sprite: one faithful pose. Every row is exactly RABBIT_W chars.
 const BASE: readonly string[] = [
-  '................DTTBD...........',
-  '................DTTBD...........',
-  '...............DDTTBDD..........',
-  '...............DTPTBBD..........',
-  '...........DDDDDTPTBBD..........',
-  '.........DDDtDDtTPPBBDD.........',
-  '......DDDDBtTDDBTPPBBBD.........',
-  '......DBDtDTTDTBTPPBBDD.........',
-  '......DtBtTTTBBBBBPBBBDDDD......',
-  '......DtTTTTBBBBBBBBBDDDtD......',
-  '.....DDBtTTTTBBBBBTBBtDBtD......',
-  '...DDDtTWWTTTTTBTTTBTTTDtD......',
-  'DDDDBBTWWWETTTTTTTTTTTTBDDD.....',
-  'wwDDBTWWWEGEWWWWWWWTTTTTtBD.....',
-  'DDDDDTWWWEEEWWWWWWWTTTTBBtD.....',
-  'DDDwWWWWWEEEwWWTWWWTtTTTTDDDD...',
-  'wwwwNWWWWwEwwwTTTTWWTTTTDTBBD...',
-  'DDDNNWWWWWwwwwTTTTTtTTTBBDDDD...',
-  'DDDwwWWWWwwwwwTTTTTTTTTTBD......',
-  'DwwDWDWWWwwwwwTTTTTTTTTTDD......',
-  'DDDDDDDDwwwwwwTTTTTTTttBBD......',
-  '....DDDwwwwwwwwTwwTTTTDDDD......',
-  '......DDtwwwwwwwTTtTtTtD........',
-  '.......DtDBBwBTTTTBDBDtD........',
-  '.......DDDDBttBTBtTDDDDD........',
-  '.......DDTTTTTtTTTtTTTDD........',
-  '.......DTTTWWWWWWWTTTTTD........',
-  '.......DTWWWWWWWWWWWTTTD........',
-  '.......DWWWWWWWWWWWWWTTD........',
-  '.......DDWWWWWWWWWWWTTDD........',
+  '......................................................tT................',
+  '................................................Tt...BDD................',
+  '...............................................BDBB.BBDEE...............',
+  '...............................................BDBBBBBDEE...............',
+  '...............................................BDBBBBTBDDD..............',
+  '...............................................BDBBBBTBBBB..............',
+  '...............................................BDBBBBBTTTT..............',
+  '...............................................BDDBBBDTTTTT.............',
+  '...............................................BDDDBBDDBTTt.............',
+  '.......................ttttsttttttt............TDDDDBDDDDBT.............',
+  '.....................tttTttTtTTTtttttttts....sstDDDDDDEEEDTts...........',
+  '..................sttTTTTTTTBBTTTTTTTTTtswwwssttBDDDDDEEEDBTw...........',
+  '................sstTTTBBBBBBBBDDBBBBTBTttswwwsstTDDDDDEEEDDBtw..........',
+  '...............stTBTBBBBBDDDDDDDDDDDDBTTTttssstTBBDDDDEEEEEDBtww........',
+  '.............stTBBBBDDDDDDDDDDDDDDDDDBBTTTTttttTBBDDDDEEEEEEDBTww.......',
+  '............ttBBDDDDDDDDDDDDDDDDDDDEEDDBTTTTTTtTBBBEDEEEEEEEEEDTww......',
+  '...........tTBBDDDDDDDDDDDEEEEEEEEEEEEDBBTTTTTtTTTTDEEEEEEEEEEEDtw......',
+  '..........tTDDDDDDDDEEDDDDEEEEEEEEEEEDDBBTTTTTTTtBDEEEEEEEEEEEDDBsw.....',
+  '.........TTBDDDDDDDEDDDDDDDEEEEEEEEEEDBBBBBTTTTTsTDEEEEEEEEEEEEDDTsw....',
+  '........TTBDDDDDDDDDDDDDDDDDEEEEEEEEDDBBBBTBBBTTTTBEEEEEEEEEEEEEEBsw....',
+  '........TBDDDDDDDDDDDDDDDDDDDDDDEEEEDDBBBBBBBBBBTTBBDDDEEEEEEEEEEDtsw...',
+  '.......TBDDDDDDDDDDDDDDDDBDDDDDDDEEEDDBTTTBTTTBTBBBTBBBBDEEEEEEEDDTssw..',
+  '.......BDDDDDDDDDDDDDDDDDBBDDDDDDDEEDDBBTTTTTTTTTBTTBBBBDEEEEEDDEEBtsw..',
+  '......TDDDDDDDDEDEDDDDDDDDDDDDDDDDDDDDBBTTTTTTTTTTTTTtTDEEEDEDDDDDBtsw..',
+  '......BDDDDDDDEEEEEDDDDEDDDDDDDDDDDDDBBBTTTTTTTTTTTTTTBBDEEDDDDDDBBTsww.',
+  '......DDDDDDEDEEEEEEEDDDEDDDDDDDDEDDDBBTTTTTTTTTTTTTTTTTBDEDDDDBTtTTssw.',
+  '.....BDDDDDDEEEEEEDEEEDEDDDDDDDDDEDDDBBTTTTTTTTTTTTTTTTTBBDDBBBTTtttsssw',
+  '.....DDDDDDDDEDEDEDEDDDDDDDDDDDDDDDDDBBTTTTTTTTTTTTTTTTTBBBDDBBTtsstsssw',
+  '....TDDDDDDDDDDEDDDEDDDDEDDDDDDDDDDDDBBTTTTTTTTTTTTTTTTTTTTBBDBTttsssss.',
+  '....TDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBTTTTTTTTTTTTBTTTTTTTTBBBTttssssw.',
+  '....BDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBBTTTTTTTTTTTTTTTTTTTTTTTTttssww..',
+  '....BDDDDDDDDDDDDDDDDDEDEDDDDDDDDDDDDDBBTTTTTTTTTTTTTTTTTTTTTTTttsswww..',
+  '....BDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBBTTTTTTTTTTTTTTTTTTTTTttttssss...',
+  '....BBDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBBTTTTTTTTTTTTTTTTTTTTTTtttsss.....',
+  '...TBDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBBBTTTTTTTTTTTTTTTTTTTtttsss......',
+  '..tTBDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBBBTTTTTTTTTTTTTTTTTTtttssww......',
+  '.TTBBDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBBBBTTTTTTTTTTTTTTTTttttsww.......',
+  '..TTBBDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBBBBTTTTTTTTTTTTTTTTttssww.......',
+  '...TBDDDDDDDDDDDEDDDDDDDDDDDDDDDDDDDDDDBBBBBTTTTTTTTTTTTTTTttsww........',
+  '....BDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBBBBBBTTTTTTTTTTTTTttssww........',
+  '.....BBDDDDDDDDDDDDEDDDDDDEDDDDDDDDDDDDBBBBBBTTTTTTTTTTTTTttssww........',
+  '......BDDDDDDDDDDDDDDDEEDDEEEEDDDDDDDDDBBBBBBBBBBTTTTTTTTTttsww.........',
+  '........DDDDDDDDDDDDDDEEDEEEEEEDDDDDDDDDBBBBBBBBBBBTTTTTTTttsww.........',
+  '..........DDDDEDDDDDDEEEEDEEEEEEEDDDDDDDBBBBBBBBBBBBBTTTTttssw..........',
+  '............EEEEEDDEEEEEEEEEEEEEEEEEDDDDBBBBBBBBBBBBBBTTTTtsw...........',
+  '...................EEEEEEEEE......EEEEDDDDDDBBBBBBDBBBBBBTt.............',
+  '.........................................DDDDDDDDDDDD...................',
 ]
 
-/** A per-frame pixel override: `[x, y, key]`. */
-type Overlay = readonly (readonly [number, number, string])[]
-
-// Blink: eye + glint become face-white with a soft closed lid.
-const BLINK: Overlay = [
-  [10, 12, 'W'], [9, 13, 'W'], [10, 13, 'W'], [11, 13, 'W'],
-  [8, 14, 'D'], [9, 14, 'D'], [10, 14, 'D'], [11, 14, 'D'], [12, 14, 'D'],
-  [9, 15, 'W'], [10, 15, 'W'], [11, 15, 'W'], [10, 16, 'W'],
-]
-
-// Ear-flick: the ear tip perks up by one row.
-const EAR_FLICK: Overlay = [
-  [16, 0, 'T'], [20, 0, 'T'], [16, 1, 'T'], [20, 1, 'T'], [21, 1, 'T'], [16, 2, 'T'],
-  [20, 2, 'B'], [21, 2, 'T'], [21, 3, 'T'], [21, 4, 'T'], [21, 5, 'B'], [21, 7, 'B'],
-]
-
-// Distinct frames, in canonical order. The animator decides the *play* sequence.
-const OVERLAYS: readonly Overlay[] = [[], BLINK, EAR_FLICK]
-
-/** Number of distinct sprite frames (0 = neutral, 1 = blink, 2 = ear-flick). */
-export const RABBIT_FRAME_COUNT = OVERLAYS.length
+/** The sprite has a single faithful pose (the loading motion is a CSS hop). */
+export const RABBIT_FRAME_COUNT = 1
 
 /**
- * Builds the pixel matrix for a frame (base with its overlay applied).
+ * Returns the sprite's pixel matrix. `frame` exists for API symmetry; only 0 is valid.
  *
- * @throws RangeError if `frame` is not an integer in `[0, RABBIT_FRAME_COUNT)`.
+ * @throws RangeError if `frame` is not 0.
  */
 export function rabbitFrameMatrix(frame = 0): string[] {
-  if (!Number.isInteger(frame) || frame < 0 || frame >= OVERLAYS.length) {
-    throw new RangeError(`rabbit frame out of range: ${frame}`)
-  }
-  const rows = BASE.map((r) => r.split(''))
-  for (const [x, y, key] of OVERLAYS[frame]!) rows[y]![x] = key
-  return rows.map((r) => r.join(''))
+  if (frame !== 0) throw new RangeError(`rabbit frame out of range: ${frame}`)
+  return BASE.slice()
 }
 
 /** One merged horizontal run of identical, non-transparent pixels. */
@@ -140,7 +132,7 @@ export function spriteRects(matrix: readonly string[]): SpriteRect[] {
   return rects
 }
 
-/** Escapes text placed inside the SVG `<title>`. */
+/** Escapes text placed inside the SVG `<title>`/attributes. */
 function escapeXml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -162,8 +154,8 @@ export interface RabbitRenderOptions {
 }
 
 /**
- * Renders a rabbit frame as a self-contained, crisp SVG string. Deterministic: the same
- * frame + options always yields byte-identical output.
+ * Renders the rabbit as a self-contained, crisp SVG string. Deterministic: the same options
+ * always yield byte-identical output.
  *
  * @throws RangeError if `frame` is out of range (see {@link rabbitFrameMatrix}).
  */

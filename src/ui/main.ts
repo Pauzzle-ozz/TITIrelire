@@ -11,7 +11,6 @@ import { comparePER, simulateParticulier, type ParticulierInput } from '../engin
 import { compareDividendes, type SocieteInput } from '../engine/societe.js'
 import type { ActivityType } from '../engine/types.js'
 import { INVALID_INPUT_HTML, renderResult } from './render.js'
-import { mountRabbit } from './sprite/animator.js'
 import { renderRabbitSVG } from './sprite/rabbit.js'
 import {
   toMicroViewModel,
@@ -125,15 +124,14 @@ function setFavicon(): void {
   link.href = href
 }
 
-/** Boot splash: an animated hopping rabbit that fades once the app is ready. Optional. */
+/** Boot splash: the hopping rabbit (CSS animation) that fades once the app is ready. Optional. */
 function runSplash(): void {
   const splash = document.getElementById('splash')
   const box = document.getElementById('splash-rabbit')
   if (splash === null || box === null) return
-  const animator = mountRabbit(box, { title: 'Chargement…', className: 'rabbit' })
+  box.innerHTML = renderRabbitSVG(0, { title: 'Chargement…', className: 'rabbit' })
   setTimeout(() => {
     splash.classList.add('is-hidden')
-    animator.stop()
     setTimeout(() => {
       splash.hidden = true
     }, SPLASH_FADE_MS)

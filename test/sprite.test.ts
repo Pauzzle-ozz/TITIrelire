@@ -14,7 +14,7 @@ import {
 const HEX = /^#[0-9a-f]{6}$/i
 
 describe('rabbit sprite — data integrity', () => {
-  it('base frame is a full RABBIT_W × RABBIT_H matrix', () => {
+  it('is a full RABBIT_W × RABBIT_H matrix', () => {
     const m = rabbitFrameMatrix(0)
     expect(m).toHaveLength(RABBIT_H)
     for (const row of m) expect(row).toHaveLength(RABBIT_W)
@@ -26,12 +26,10 @@ describe('rabbit sprite — data integrity', () => {
     expect(RABBIT_PALETTE[TRANSPARENT]).toBeUndefined()
   })
 
-  it('every pixel in every frame is a known palette key or transparent', () => {
+  it('every pixel is a known palette key or transparent', () => {
     const known = new Set([TRANSPARENT, ...Object.keys(RABBIT_PALETTE)])
-    for (let f = 0; f < RABBIT_FRAME_COUNT; f++) {
-      for (const row of rabbitFrameMatrix(f)) {
-        for (const ch of row) expect(known.has(ch)).toBe(true)
-      }
+    for (const row of rabbitFrameMatrix(0)) {
+      for (const ch of row) expect(known.has(ch)).toBe(true)
     }
   })
 
@@ -46,41 +44,21 @@ describe('rabbit sprite — data integrity', () => {
         }
       }
     }
-    expect(used.size).toBeGreaterThanOrEqual(6) // white, two tans, two browns, eye, nose…
+    expect(used.size).toBeGreaterThanOrEqual(6) // cream, taupes, browns, darks…
     expect(solid).toBeGreaterThan(RABBIT_W * RABBIT_H * 0.3)
   })
 
-  it('has an eye with a glint in the neutral frame', () => {
+  it('contains the coat range — a cream tone, taupe (T) and the darkest fur (E)', () => {
     const flat = rabbitFrameMatrix(0).join('')
-    expect(flat).toContain('E') // eye
-    expect(flat).toContain('G') // glint
-    expect(flat).toContain('P') // inner ear (pink) — proves the erect ear is drawn
+    expect(/[Wwst]/.test(flat)).toBe(true) // some cream / light tone
+    expect(flat).toContain('T') // taupe-brown
+    expect(flat).toContain('E') // darkest fur
   })
 })
 
-describe('rabbit sprite — frames', () => {
-  it('exposes exactly three distinct frames', () => {
-    expect(RABBIT_FRAME_COUNT).toBe(3)
-    const svgs = [0, 1, 2].map((f) => renderRabbitSVG(f))
-    expect(new Set(svgs).size).toBe(3)
-  })
-
-  it('the blink frame closes the eye (no E/G left)', () => {
-    const base = rabbitFrameMatrix(0).join('')
-    const blink = rabbitFrameMatrix(1).join('')
-    expect(base).not.toBe(blink)
-    expect(blink).not.toContain('E')
-    expect(blink).not.toContain('G')
-  })
-
-  it('the ear-flick frame only changes the top (ear) rows', () => {
-    const base = rabbitFrameMatrix(0)
-    const ear = rabbitFrameMatrix(2)
-    for (let y = 0; y < RABBIT_H; y++) {
-      if (y < 8) continue // ear region may differ
-      expect(ear[y]).toBe(base[y])
-    }
-    expect(ear.slice(0, 8).join('')).not.toBe(base.slice(0, 8).join(''))
+describe('rabbit sprite — single frame', () => {
+  it('exposes exactly one frame', () => {
+    expect(RABBIT_FRAME_COUNT).toBe(1)
   })
 
   it('returns a fresh matrix each call (mutation-safe)', () => {
@@ -89,7 +67,7 @@ describe('rabbit sprite — frames', () => {
     expect(rabbitFrameMatrix(0)[0]).not.toBe(a[0])
   })
 
-  it.each([-1, 3, 1.5, NaN, Infinity])('throws RangeError for invalid frame %s', (bad) => {
+  it.each([-1, 1, 2, 1.5, NaN])('throws RangeError for invalid frame %s', (bad) => {
     expect(() => rabbitFrameMatrix(bad as number)).toThrow(RangeError)
     expect(() => renderRabbitSVG(bad as number)).toThrow(RangeError)
   })
@@ -106,7 +84,7 @@ describe('spriteRects — run-length merging', () => {
     ])
   })
 
-  it('covers exactly the non-transparent pixels of the base frame', () => {
+  it('covers exactly the non-transparent pixels of the sprite', () => {
     const matrix = rabbitFrameMatrix(0)
     const solid = matrix.join('').split('').filter((c) => c !== TRANSPARENT).length
     const rects = spriteRects(matrix)
@@ -122,19 +100,16 @@ describe('renderRabbitSVG — output', () => {
     expect(svg.endsWith('</svg>')).toBe(true)
     expect(svg).toContain('role="img"')
     expect(svg).toMatch(/<title>TITI(?:&#39;|')relire<\/title>/) // apostrophe may be escaped
-    expect(svg).toContain('viewBox="0 0 32 30"')
+    expect(svg).toContain(`viewBox="0 0 ${RABBIT_W} ${RABBIT_H}"`)
     expect(svg).toContain('<rect')
-    // No transparent pixels leaked as undefined/empty fills.
     expect(svg).not.toContain('undefined')
     expect(svg).not.toContain('fill=""')
-    // Exactly one rect per merged run.
     const rectCount = (svg.match(/<rect/g) ?? []).length
     expect(rectCount).toBe(spriteRects(rabbitFrameMatrix(0)).length)
   })
 
   it('is deterministic', () => {
     expect(renderRabbitSVG(0)).toBe(renderRabbitSVG(0))
-    expect(renderRabbitSVG(2)).toBe(renderRabbitSVG(2))
   })
 
   it('fixes the size only when pixel is given', () => {
