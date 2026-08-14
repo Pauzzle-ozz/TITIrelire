@@ -50,6 +50,13 @@ from drifting apart.
   today, IndexedDB or a Tauri/OS-keychain store tomorrow) holds each blob; `Vault.open/save` +
   `migrate()` (schema-versioned) tie it together. The UI panel is **opt-in**: no `#vault`
   container → the simulator runs stateless and secret-free.
+- **Accounting & projection** — `src/accounting/ledger.ts` turns pro-classified transactions
+  into a compte de résultat (produits/charges/résultat); `src/engine/reel.ts` simulates the
+  régime réel (BIC/BNC) and compares micro-vs-réel money-in-pocket (TNS contributions are a
+  flagged estimate); `src/engine/tva.ts` derives the VAT régime (exact) with a flagged amount
+  estimate; `src/advice/projection.ts` projects the optimisation gains over 1…X years. The
+  income-tax barème now models the décote and the quotient-familial plafonnement (couple flag).
+  Honest by construction: estimated parts are labelled, nothing is invented.
 - **Classification (pro vs perso)** — `src/classify` tags each transaction so the engine only
   counts professional income. A first-match cascade (learned corrections → deterministic FR
   rules → heuristics → `unknown`) yields an explainable verdict (category + confidence +
