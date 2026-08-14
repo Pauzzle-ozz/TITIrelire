@@ -1,18 +1,16 @@
 /**
- * Pure view-model for the UI.
+ * Pure view-models for the UI.
  *
- * Turns a {@link Comparison} into ready-to-render, locale-formatted strings.
- * Keeping this DOM-free makes the display logic unit-testable and keeps
- * `main.ts` a thin wiring layer.
+ * Each fiscal profile (micro-entrepreneur, salaried individual, company) is turned into
+ * the same DOM-free {@link ViewModel} shape, so `main.ts` renders them uniformly. Keeping
+ * this pure makes the display logic unit-testable.
  */
 import type { Comparison } from '../engine/compare.js'
-import type { IncomeTaxMode, WarningLevel } from '../engine/types.js'
+import type { DividendComparison, SocieteResult } from '../engine/societe.js'
+import type { ParticulierResult, PerComparison } from '../engine/particulier.js'
+import type { IncomeTaxMode, LineItem, WarningLevel } from '../engine/types.js'
 
-const EUR = new Intl.NumberFormat('fr-FR', {
-  style: 'currency',
-  currency: 'EUR',
-  maximumFractionDigits: 2,
-})
+const EUR = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 })
 const PCT = new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: 1 })
 
 /** Formats an amount as euros, French style (e.g. "43 481,00 €"). */
@@ -25,7 +23,7 @@ export function formatPct(ratio: number): string {
   return PCT.format(ratio)
 }
 
-/** Human label for an income-tax mode. */
+/** Human label for a micro income-tax mode. */
 export function modeLabel(mode: IncomeTaxMode): string {
   return mode === 'bareme' ? 'le barème progressif' : 'le versement libératoire'
 }
@@ -40,13 +38,11 @@ export interface ViewRow {
   detail: string
 }
 
-export interface ViewOption {
-  label: string
-  mode: IncomeTaxMode
-  incomeTax: string
-  totalLevies: string
-  netIncome: string
-  recommended: boolean
+/** A generic 2-option comparison table. `rows[i].label` is the first ("Option") column. */
+export interface ViewComparison {
+  title: string
+  columns: string[]
+  rows: { label: string; cells: string[]; recommended: boolean }[]
 }
 
 export interface ViewWarning {
@@ -57,43 +53,117 @@ export interface ViewWarning {
 export interface ViewModel {
   recommendationTitle: string
   recommendationDetail: string
-  /** Formatted net income of the recommended option. */
+  /** Formatted headline figure (net income / net dividend…). */
   netHighlight: string
-  /** Formatted effective levy rate of the recommended option. */
-  effectiveRate: string
-  /** Both options, barème first. */
-  options: ViewOption[]
-  /** Line-by-line breakdown of the recommended option. */
+  /** Caption under the headline (e.g. "revenu net estimé"). */
+  netLabel: string
+  /** Formatted effective rate, when relevant. */
+  effectiveRate?: string
+  /** Optional 2-option comparison. */
+  comparison?: ViewComparison
+  /** Line-by-line breakdown. */
   breakdown: ViewRow[]
   warnings: ViewWarning[]
 }
 
-/** Builds the full view-model for a comparison. */
-export function toViewModel(comparison: Comparison): ViewModel {
+function rowFromLine(line: LineItem): ViewRow {
+  return { label: line.label, amount: formatEUR(line.amount), detail: line.detail }
+}
+
+/** Micro-entrepreneur: barème vs versement libératoire. */
+export function toMicroViewModel(comparison: Comparison): ViewModel {
   const recommended =
     comparison.recommended === 'bareme' ? comparison.bareme : comparison.versementLiberatoire
+  const options = [comparison.bareme, comparison.versementLiberatoire]
 
   return {
     recommendationTitle: `Recommandation : ${capitalize(modeLabel(comparison.recommended))}`,
     recommendationDetail: comparison.explanation,
     netHighlight: formatEUR(recommended.netIncome),
+    netLabel: 'revenu net estimé',
     effectiveRate: formatPct(recommended.result.effectiveLevyRate),
-    options: [comparison.bareme, comparison.versementLiberatoire].map((option) => ({
-      label: capitalize(modeLabel(option.mode)),
-      mode: option.mode,
-      incomeTax: formatEUR(option.incomeTax),
-      totalLevies: formatEUR(option.totalLevies),
-      netIncome: formatEUR(option.netIncome),
-      recommended: option.mode === comparison.recommended,
-    })),
-    breakdown: recommended.result.breakdown.map((line) => ({
-      label: line.label,
-      amount: formatEUR(line.amount),
-      detail: line.detail,
-    })),
-    warnings: comparison.warnings.map((warning) => ({
-      level: warning.level,
-      message: warning.message,
-    })),
+    comparison: {
+      title: 'Barème vs versement libératoire',
+      columns: ['Option', 'Impôt', 'Prélèvements', 'Revenu net'],
+      rows: options.map((o) => ({
+        label: capitalize(modeLabel(o.mode)),
+        cells: [formatEUR(o.incomeTax), formatEUR(o.totalLevies), formatEUR(o.netIncome)],
+        recommended: o.mode === comparison.recommended,
+      })),
+    },
+    breakdown: recommended.result.breakdown.map(rowFromLine),
+    warnings: comparison.warnings.map((w) => ({ level: w.level, message: w.message })),
+  }
+}
+
+/** Salaried individual: income tax, with the PER optimisation when a contribution is set. */
+export function toParticulierViewModel(result: ParticulierResult, per: PerComparison): ViewModel {
+  const hasPer = per.deductible > 0
+  const salaire = result.input.salaireNetImposable
+
+  return {
+    recommendationTitle: hasPer
+      ? `PER : ${formatEUR(per.taxSaving)} d'impôt en moins`
+      : 'Impôt sur le revenu',
+    recommendationDetail: per.explanation,
+    netHighlight: formatEUR(result.netAfterTax),
+    netLabel: 'revenu net après impôt',
+    effectiveRate: formatPct(result.effectiveRate),
+    ...(hasPer
+      ? {
+          comparison: {
+            title: 'Sans PER vs avec PER',
+            columns: ['Option', 'Impôt', 'Revenu net'],
+            rows: [
+              {
+                label: 'Sans PER',
+                cells: [formatEUR(per.taxWithout), formatEUR(salaire - per.taxWithout)],
+                recommended: false,
+              },
+              {
+                label: `Avec PER (${formatEUR(per.deductible)})`,
+                cells: [formatEUR(per.taxWith), formatEUR(salaire - per.taxWith)],
+                recommended: per.taxSaving > 0,
+              },
+            ],
+          },
+        }
+      : {}),
+    breakdown: result.breakdown.map(rowFromLine),
+    warnings: result.warnings.map((w) => ({ level: w.level, message: w.message })),
+  }
+}
+
+/** Company (SASU): IS then dividends, PFU vs barème. */
+export function toSocieteViewModel(result: SocieteResult, comparison: DividendComparison): ViewModel {
+  const recommendedNet = comparison.recommended === 'pfu' ? comparison.netPfu : comparison.netBareme
+  const label = comparison.recommended === 'pfu' ? 'le PFU (flat tax)' : 'le barème progressif'
+  const benefice = result.input.benefice
+  const overallRate = benefice > 0 ? 1 - recommendedNet / benefice : 0
+
+  return {
+    recommendationTitle: `Recommandation : ${capitalize(label)}`,
+    recommendationDetail: comparison.explanation,
+    netHighlight: formatEUR(recommendedNet),
+    netLabel: 'net dividende (associé)',
+    effectiveRate: formatPct(overallRate),
+    comparison: {
+      title: 'PFU vs barème (dividende)',
+      columns: ['Option', 'Net dividende'],
+      rows: [
+        {
+          label: 'PFU (flat tax)',
+          cells: [formatEUR(comparison.netPfu)],
+          recommended: comparison.recommended === 'pfu',
+        },
+        {
+          label: 'Barème progressif',
+          cells: [formatEUR(comparison.netBareme)],
+          recommended: comparison.recommended === 'bareme',
+        },
+      ],
+    },
+    breakdown: result.breakdown.map(rowFromLine),
+    warnings: comparison.warnings.map((w) => ({ level: w.level, message: w.message })),
   }
 }

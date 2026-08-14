@@ -43,6 +43,8 @@
       }
       h2 { font-size: 1.05rem; margin: 0 0 1rem; }
       form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem; }
+      .profile-fields { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem; }
+      .profile-fields[hidden] { display: none; }
       .field { display: flex; flex-direction: column; gap: 0.35rem; }
       .field.full { grid-column: 1 / -1; }
       label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
@@ -95,34 +97,94 @@
       <section class="card">
         <h2>Votre situation</h2>
         <form id="form">
-          <div class="field">
-            <label for="activity">Activité</label>
-            <select id="activity">
-              <option value="vente_marchandises">Vente de marchandises (BIC)</option>
-              <option value="prestations_bic">Prestations de services (BIC)</option>
-              <option value="prestations_bnc" selected>Prestations de services (BNC)</option>
-              <option value="liberal_cipav">Profession libérale (CIPAV)</option>
+          <div class="field full">
+            <label for="profile">Profil</label>
+            <select id="profile">
+              <option value="micro" selected>Micro-entrepreneur</option>
+              <option value="particulier">Particulier salarié</option>
+              <option value="societe">Société (SASU)</option>
             </select>
           </div>
-          <div class="field">
-            <label for="revenue">Chiffre d'affaires annuel (€)</label>
-            <input id="revenue" type="number" min="0" step="100" value="40000" />
+
+          <!-- Micro-entrepreneur -->
+          <div id="fields-micro" class="profile-fields">
+            <div class="field">
+              <label for="activity">Activité</label>
+              <select id="activity">
+                <option value="vente_marchandises">Vente de marchandises (BIC)</option>
+                <option value="prestations_bic">Prestations de services (BIC)</option>
+                <option value="prestations_bnc" selected>Prestations de services (BNC)</option>
+                <option value="liberal_cipav">Profession libérale (CIPAV)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="revenue">Chiffre d'affaires annuel (€)</label>
+              <input id="revenue" type="number" min="0" step="100" value="40000" />
+            </div>
+            <div class="field">
+              <label for="parts">Parts de quotient familial</label>
+              <input id="parts" type="number" min="1" step="0.5" value="1" />
+            </div>
+            <div class="field">
+              <label for="other">Autres revenus imposables du foyer (€)</label>
+              <input id="other" type="number" min="0" step="100" value="0" />
+            </div>
+            <div class="field check">
+              <input id="acre" type="checkbox" />
+              <label for="acre">Bénéfice de l'ACRE (1re année)</label>
+            </div>
+            <div class="field check">
+              <input id="acreReduced" type="checkbox" />
+              <label for="acreReduced">Création à partir du 01/07/2026 (ACRE 25 %)</label>
+            </div>
           </div>
-          <div class="field">
-            <label for="parts">Parts de quotient familial</label>
-            <input id="parts" type="number" min="1" step="0.5" value="1" />
+
+          <!-- Particulier salarié -->
+          <div id="fields-particulier" class="profile-fields" hidden>
+            <div class="field">
+              <label for="p-salaire">Salaire net imposable annuel (€)</label>
+              <input id="p-salaire" type="number" min="0" step="100" value="40000" />
+            </div>
+            <div class="field">
+              <label for="p-parts">Parts de quotient familial</label>
+              <input id="p-parts" type="number" min="1" step="0.5" value="1" />
+            </div>
+            <div class="field">
+              <label for="p-frais">Frais réels (€) — sinon 10 %</label>
+              <input id="p-frais" type="number" min="0" step="100" placeholder="10 % par défaut" />
+            </div>
+            <div class="field">
+              <label for="p-per">Versement PER (€)</label>
+              <input id="p-per" type="number" min="0" step="100" value="0" />
+            </div>
+            <div class="field full">
+              <label for="p-autres">Autres revenus imposables du foyer (€)</label>
+              <input id="p-autres" type="number" min="0" step="100" value="0" />
+            </div>
           </div>
-          <div class="field">
-            <label for="other">Autres revenus imposables du foyer (€)</label>
-            <input id="other" type="number" min="0" step="100" value="0" />
-          </div>
-          <div class="field check">
-            <input id="acre" type="checkbox" />
-            <label for="acre">Bénéfice de l'ACRE (1re année)</label>
-          </div>
-          <div class="field check">
-            <input id="acreReduced" type="checkbox" />
-            <label for="acreReduced">Création à partir du 01/07/2026 (ACRE 25 %)</label>
+
+          <!-- Société (SASU) -->
+          <div id="fields-societe" class="profile-fields" hidden>
+            <div class="field">
+              <label for="s-benefice">Bénéfice imposable avant IS (€)</label>
+              <input id="s-benefice" type="number" min="0" step="1000" value="100000" />
+            </div>
+            <div class="field">
+              <label for="s-dividendes">Dividende distribué (€) — sinon tout le résultat</label>
+              <input id="s-dividendes" type="number" min="0" step="1000" placeholder="tout le résultat" />
+            </div>
+            <div class="field">
+              <label for="s-parts">Parts de quotient familial</label>
+              <input id="s-parts" type="number" min="1" step="0.5" value="1" />
+            </div>
+            <div class="field">
+              <label for="s-autres">Autres revenus imposables du foyer (€)</label>
+              <input id="s-autres" type="number" min="0" step="100" value="0" />
+            </div>
+            <div class="field check">
+              <input id="s-reduced" type="checkbox" checked />
+              <label for="s-reduced">Éligible au taux réduit d'IS (15 %)</label>
+            </div>
           </div>
         </form>
       </section>
