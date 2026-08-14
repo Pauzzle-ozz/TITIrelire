@@ -129,9 +129,13 @@ The move from a stateless simulator to a fiscal copilot, on top of Tracks A & B:
    `proRevenue` split totals so only professional income feeds the engine; corrections are
    remembered in the vault (schema v2). Next: the transactions UI to view/correct, and
    richer rules. The "smart" core.
-4. **Advice engine** — from a profile, edit the charges due *and* surface chiffré, rule-traced
-   optimisations (PER, régime, VAT thresholds, dividende arbitrage). Posture: information &
-   transparent simulation, not prescriptive advice (clear "not a substitute for an expert").
+4. **Advice engine** — 🟡 in progress. ✅ micro advisor (`src/advice`): reuses the engine to
+   value the régime choice and the ACRE lever in euros, warns on VAT-franchise / micro-ceiling
+   proximity (from `microThresholds`), with a micro-vs-réel note; each advice is traced
+   (`ruleRef`), shown in an escaped `#advice` card with an indicative total and an
+   expert-comptable disclaimer. Next: advisors for the salaried and company profiles, and a
+   régime-réel model to quantify the micro-vs-réel arbitrage. Posture: information & transparent
+   simulation, not prescriptive advice.
 5. **Desktop app (Tauri)** — package the whole thing as a one-click installer; connectors and
    their secrets move into the Rust layer, resolving the local-first vs live-secrets tension.
 

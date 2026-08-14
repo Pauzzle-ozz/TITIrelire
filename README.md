@@ -35,6 +35,9 @@ leaves your device.
   and reasoning behind every euro.
 - 💡 **Optimisation** — compares the *versement libératoire* against the progressive scale and
   recommends the cheaper one, in euros.
+- 🧭 **Advice engine (micro)** — surfaces transparent, euro-quantified optimisations (régime
+  choice, ACRE) and threshold alerts (VAT franchise, micro ceiling), each traced to a rule,
+  with an honest "not a substitute for an accountant" disclaimer.
 - 🧮 **Accurate & auditable** — 2026 parameters, checked against public sources and
   documented in [`docs/parameters-2026.md`](./docs/parameters-2026.md).
 - 🔒 **Local-first** — runs entirely in the browser; nothing is sent anywhere.
