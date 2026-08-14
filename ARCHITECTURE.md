@@ -119,8 +119,10 @@ The move from a stateless simulator to a fiscal copilot, on top of Tracks A & B:
 
 1. **Encrypted local vault** — ✅ done (`src/vault`): master-password AES-GCM store, opt-in
    UI panel with prefill + autosave. The foundation the rest of this track writes into.
-2. **Guided data entry & connection UX** — a form-first onboarding and a one-click connect
-   flow over the existing importers/connectors, feeding transactions straight into the vault.
+2. **Data entry & review UX** — 🟡 in progress. ✅ a transactions panel (`src/ui/tx-*`) that
+   imports a CSV statement (preset-based), shows each movement classified with its reason,
+   lets the user correct a category in one click (learned + persisted), and feeds the
+   professional-only CA into the engine. Next: one-click live-connector onboarding (OAuth).
 3. **Income/expense classification (pro vs perso)** — ✅ engine done (`src/classify`): a
    transparent cascade (learned corrections → deterministic FR rules → heuristics → unknown),
    each verdict carrying a confidence, source and French reason. `aggregateByCategory` /

@@ -41,6 +41,9 @@ leaves your device.
 - 🗄️ **Personal space (optional)** — save your inputs and imported transactions so you don't
   re-type them. The data is encrypted on your device with a master password (AES-256-GCM);
   it never leaves the machine, and losing the password means it's unrecoverable.
+- 🏷️ **Auto pro/perso sorting** — import a CSV statement and each movement is classified
+  professional or personal, with the reason shown. Correct a category in one click and the
+  tool remembers it; only professional income counts toward your turnover.
 - 👥 **Multiple profiles** — micro-entrepreneur, salaried individual (income tax + PER
   optimisation), and single-shareholder company (SASU: IS + dividends, PFU vs barème).
 - 🧩 **publicodes for the micro rules** — the micro-entrepreneur module uses
