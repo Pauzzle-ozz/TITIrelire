@@ -114,3 +114,22 @@ export type { CsvMapping, CsvOptions, CsvPreset } from './transactions/import/cs
 export { importCsv, importCsvWithPreset, CSV_PRESETS } from './transactions/import/csv.js'
 
 export { parseFacturX, importFacturX } from './transactions/import/facturx.js'
+
+// ── Personal space (encrypted local vault) ────────────────────────────────────
+export type { VaultState, VaultProfile, ProfileInputs } from './vault/types.js'
+export { SCHEMA_VERSION, emptyVaultState, isVaultProfile } from './vault/types.js'
+export type { CryptoDeps, Envelope } from './vault/crypto.js'
+export {
+  encryptString,
+  decryptString,
+  encryptJson,
+  decryptJson,
+  defaultCryptoDeps,
+} from './vault/crypto.js'
+export type { VaultStorage, WebStorageLike } from './vault/storage.js'
+export {
+  MemoryVaultStorage,
+  WebVaultStorage,
+  DEFAULT_STORAGE_KEY,
+} from './vault/storage.js'
+export { Vault, migrate } from './vault/vault.js'
