@@ -48,6 +48,11 @@ from drifting apart.
   IndexedDB or a Tauri/OS-keychain store tomorrow) holds the blob; `Vault.open/save` +
   `migrate()` (schema-versioned) tie it together. The UI panel is **opt-in**: no `#vault`
   container → the simulator runs stateless and secret-free, as before.
+- **Classification (pro vs perso)** — `src/classify` tags each transaction so the engine only
+  counts professional income. A first-match cascade (learned corrections → deterministic FR
+  rules → heuristics → `unknown`) yields an explainable verdict (category + confidence +
+  source + French reason); `aggregateByCategory`/`proRevenue` turn tagged transactions into
+  the correct CA. It reads the canonical `Transaction` and stays independent of the engine.
 - **UI** — a local-first web app (Vite). A pure view-model + `render.ts` turn engine results
   into the transparent, line-by-line view; the DOM wiring lives in `main.ts`. The **pixel-art
   rabbit** (`src/ui/sprite`) — pixelated from the owner's own photo — is the logo, favicon and
@@ -116,9 +121,12 @@ The move from a stateless simulator to a fiscal copilot, on top of Tracks A & B:
    UI panel with prefill + autosave. The foundation the rest of this track writes into.
 2. **Guided data entry & connection UX** — a form-first onboarding and a one-click connect
    flow over the existing importers/connectors, feeding transactions straight into the vault.
-3. **Income/expense classification (pro vs perso)** — a transparent cascade (deterministic
-   rules → heuristics → local learning of user corrections), each decision explainable and
-   editable. The "smart" core.
+3. **Income/expense classification (pro vs perso)** — ✅ engine done (`src/classify`): a
+   transparent cascade (learned corrections → deterministic FR rules → heuristics → unknown),
+   each verdict carrying a confidence, source and French reason. `aggregateByCategory` /
+   `proRevenue` split totals so only professional income feeds the engine; corrections are
+   remembered in the vault (schema v2). Next: the transactions UI to view/correct, and
+   richer rules. The "smart" core.
 4. **Advice engine** — from a profile, edit the charges due *and* surface chiffré, rule-traced
    optimisations (PER, régime, VAT thresholds, dividende arbitrage). Posture: information &
    transparent simulation, not prescriptive advice (clear "not a substitute for an expert").
