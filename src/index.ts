@@ -158,6 +158,16 @@ export { classifyTransaction, classifyAll } from './classify/classify.js'
 export type { CategoryTotals, ClassifiedSummary } from './classify/aggregate.js'
 export { aggregateByCategory, proRevenue } from './classify/aggregate.js'
 
+// ── Accounting (ledger / compte de résultat) ──────────────────────────────────
+export type { ChargeCategory, ProduitCategory, LedgerLine, Ledger } from './accounting/ledger.js'
+export {
+  buildLedger,
+  chargeCategory,
+  produitCategory,
+  CHARGE_LABELS,
+  PRODUIT_LABELS,
+} from './accounting/ledger.js'
+
 // ── Advice engine (transparent optimisation) ──────────────────────────────────
 export type { Advice, AdviceKind } from './advice/types.js'
 export { totalEstimatedGain } from './advice/shared.js'
