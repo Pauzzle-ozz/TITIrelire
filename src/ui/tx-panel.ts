@@ -15,7 +15,7 @@ import { recordCorrection, type LearnedRules } from '../classify/learned.js'
 import type { TxCategory } from '../classify/types.js'
 import { importCsvWithPreset, CSV_PRESETS } from '../transactions/import/csv.js'
 import { normalizeAll } from '../transactions/normalize.js'
-import type { Transaction } from '../transactions/types.js'
+import type { RawTransaction, Transaction } from '../transactions/types.js'
 import { renderTxTable } from './tx-render.js'
 import { toTxTableViewModel } from './tx-view-model.js'
 
@@ -56,6 +56,21 @@ function mergeById(existing: Transaction[], incoming: Transaction[]): Transactio
 }
 
 const CATEGORY_VALUES: ReadonlySet<string> = new Set<TxCategory>(['pro', 'perso', 'unknown'])
+
+/**
+ * Parses a pasted import into canonical transactions. `format` is either the special value
+ * `json` (a canonical `Transaction[]` produced by the self-hosted connector runner) or a CSV
+ * preset key. The local-first equivalent of "connecting" a live source: run the connector
+ * outside the browser, drop its JSON here.
+ */
+function parseImport(text: string, format: string): Transaction[] {
+  if (format === 'json') {
+    const parsed: unknown = JSON.parse(text)
+    if (!Array.isArray(parsed)) throw new RangeError('Le JSON doit être un tableau de transactions')
+    return normalizeAll(parsed as RawTransaction[])
+  }
+  return normalizeAll(importCsvWithPreset(text, format as keyof typeof CSV_PRESETS))
+}
 
 /**
  * Wires the transactions panel if `#transactions` is present, else returns `null`.
@@ -110,15 +125,15 @@ export function initTxPanel(deps: TxPanelDeps): TxPanelHandle | null {
       setMsg('Collez un export CSV, ou choisissez un fichier.')
       return
     }
-    const preset = (presetSelect?.value ?? 'generic') as keyof typeof CSV_PRESETS
+    const format = presetSelect?.value ?? 'generic'
     try {
-      const imported = importCsvWithPreset(trimmed, preset)
-      transactions = mergeById(transactions, normalizeAll(imported))
+      const imported = parseImport(trimmed, format)
+      transactions = mergeById(transactions, imported)
       await deps.save({ transactions, learned })
       render()
       setMsg(`${imported.length} transaction(s) importée(s).`)
     } catch {
-      setMsg('Import impossible : vérifiez le format CSV et le modèle choisi.')
+      setMsg('Import impossible : vérifiez le format et le modèle choisi.')
     }
   }
 

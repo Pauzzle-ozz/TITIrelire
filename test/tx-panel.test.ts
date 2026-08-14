@@ -92,6 +92,32 @@ describe('CSV import + classification', () => {
     expect(handle.transactions()).toHaveLength(3)
   })
 
+  it('imports a connector JSON export (canonical Transaction[])', async () => {
+    const store = makeStore()
+    const handle = initTxPanel({ doc: document, now: NOW, load: store.load, save: store.save }) as TxPanelHandle
+    ;(document.getElementById('tx-preset') as HTMLSelectElement).innerHTML =
+      '<option value="json" selected>JSON</option>'
+    ;(document.getElementById('tx-input') as HTMLTextAreaElement).value = JSON.stringify([
+      { id: 'j1', date: '2026-03-01', amount: 1200, currency: 'EUR', label: 'Stripe payout', source: 'stripe' },
+      { id: 'j2', date: '2026-03-02', amount: -300, currency: 'EUR', label: 'PRLV URSSAF', source: 'bank' },
+    ])
+    click('tx-import-btn')
+    await tick()
+    expect(handle.transactions()).toHaveLength(2)
+    expect(store.get().transactions.map((t) => t.id)).toEqual(['j1', 'j2'])
+  })
+
+  it('rejects JSON that is not an array', async () => {
+    const store = makeStore()
+    initTxPanel({ doc: document, now: NOW, load: store.load, save: store.save })
+    ;(document.getElementById('tx-preset') as HTMLSelectElement).innerHTML =
+      '<option value="json" selected>JSON</option>'
+    ;(document.getElementById('tx-input') as HTMLTextAreaElement).value = '{"not":"an array"}'
+    click('tx-import-btn')
+    await tick()
+    expect(document.getElementById('tx-msg')?.textContent ?? '').toMatch(/impossible/i)
+  })
+
   it('shows a message on invalid CSV', async () => {
     const store = makeStore()
     initTxPanel({ doc: document, now: NOW, load: store.load, save: store.save })

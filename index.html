@@ -446,21 +446,25 @@
       <section id="transactions" class="card" aria-labelledby="tx-h">
         <h2 id="tx-h">Mes transactions</h2>
         <p class="tx-lede">
-          Importez un relevé (CSV) : chaque mouvement est classé <strong>pro</strong> ou
-          <strong>perso</strong>, avec la raison. Corrigez une catégorie d'un clic — l'outil
-          la retient. Seuls les encaissements <strong>pro</strong> alimentent le CA.
+          Importez vos mouvements : un <strong>relevé CSV</strong> (banque, Stripe, Qonto…) ou
+          le <strong>JSON d'un connecteur</strong> lancé hors navigateur (Stripe, banque DSP2).
+          Chaque mouvement est classé <strong>pro</strong> ou <strong>perso</strong>, avec la
+          raison ; corrigez d'un clic, l'outil retient. Seuls les encaissements
+          <strong>pro</strong> alimentent le CA. La connexion bancaire directe (OAuth en un
+          clic) arrivera avec l'application à installer.
         </p>
         <div class="tx-import">
           <div class="field">
             <label for="tx-preset">Format du CSV</label>
             <select id="tx-preset">
-              <option value="generic" selected>Générique (id, date, amount, label, currency)</option>
-              <option value="bank_fr">Relevé bancaire FR (Débit/Crédit)</option>
-              <option value="qonto">Qonto</option>
-              <option value="stripe">Stripe</option>
-              <option value="paypal">PayPal</option>
-              <option value="shopify">Shopify</option>
-              <option value="sumup">SumUp</option>
+              <option value="generic" selected>CSV générique (id, date, amount, label, currency)</option>
+              <option value="bank_fr">CSV — Relevé bancaire FR (Débit/Crédit)</option>
+              <option value="qonto">CSV — Qonto</option>
+              <option value="stripe">CSV — Stripe</option>
+              <option value="paypal">CSV — PayPal</option>
+              <option value="shopify">CSV — Shopify</option>
+              <option value="sumup">CSV — SumUp</option>
+              <option value="json">Connecteur (JSON exporté par le runner)</option>
             </select>
           </div>
           <div class="field full">
