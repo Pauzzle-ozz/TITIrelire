@@ -16,7 +16,10 @@ import { adviseSociete } from '../advice/societe.js'
 import { totalEstimatedGain } from '../advice/shared.js'
 import type { Advice } from '../advice/types.js'
 import { renderAdvice } from './advice-render.js'
+import { buildLedger } from '../accounting/ledger.js'
+import { tvaStatus, type TvaStatus } from '../engine/tva.js'
 import { renderDashboard } from './dashboard-render.js'
+import { renderFiscalTable } from './fiscal-render.js'
 import { applyForm, readForm } from './form-state.js'
 import { EMPTY_STATE_HTML, INVALID_INPUT_HTML, renderResult } from './render.js'
 import { createRouter, type Router } from './router.js'
@@ -120,11 +123,42 @@ function toggleFields(profile: Profile): void {
   }
 }
 
+/** Total deductible pro charges from the imported transactions, or 0 when none. */
+function currentCharges(): number {
+  const classified = txPanel?.classified() ?? []
+  return classified.length === 0 ? 0 : buildLedger(classified).charges.total
+}
+
 /** Computes transparent advice for the selected profile. */
 function adviceFor(profile: Profile): Advice[] {
   if (profile === 'particulier') return adviseParticulier(readParticulier())
   if (profile === 'societe') return adviseSociete(readSociete())
-  return adviseMicro(readMicro())
+  // Feed real charges (from transactions) so the micro-vs-réel advice is quantified.
+  const charges = currentCharges()
+  return adviseMicro(readMicro(), charges > 0 ? charges : undefined)
+}
+
+/**
+ * Renders the accountant-style fiscal table from the imported transactions into the optional
+ * `#fiscal` region. Micro only (produits/charges + VAT régime); cleared otherwise.
+ */
+function renderFiscalRegion(): void {
+  const region = document.getElementById('fiscal')
+  if (region === null) return
+  const classified = txPanel?.classified() ?? []
+  const profile = el<HTMLSelectElement>('profile').value as Profile
+  if (classified.length === 0 || profile !== 'micro') {
+    region.innerHTML = ''
+    return
+  }
+  const ledger = buildLedger(classified)
+  let tva: TvaStatus | undefined
+  try {
+    tva = tvaStatus({ activity: el<HTMLSelectElement>('activity').value as ActivityType, ca: ledger.produits.total, charges: ledger.charges.total })
+  } catch {
+    tva = undefined
+  }
+  region.innerHTML = renderFiscalTable(ledger, tva)
 }
 
 /**
@@ -200,6 +234,7 @@ function compute(): void {
     clearAdvice()
   }
   renderDashboardRegion(profile)
+  renderFiscalRegion()
 }
 
 /** The pages of the app shell, matched to `[data-page]` / `data-route` in the DOM. */
@@ -342,6 +377,10 @@ function initVault(): void {
     },
     save: (data) => vaultPanel?.patch({ transactions: data.transactions, learnedCategories: data.learned }),
     onProRevenue: applyProRevenue,
+    onChanged: () => {
+      renderFiscalRegion()
+      renderAdviceRegion(el<HTMLSelectElement>('profile').value as Profile)
+    },
   })
 
   vaultPanel = initVaultPanel({

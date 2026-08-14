@@ -12,7 +12,7 @@
  */
 import { classifyAll } from '../classify/classify.js'
 import { recordCorrection, type LearnedRules } from '../classify/learned.js'
-import type { TxCategory } from '../classify/types.js'
+import type { ClassifiedTransaction, TxCategory } from '../classify/types.js'
 import { importCsvWithPreset, CSV_PRESETS } from '../transactions/import/csv.js'
 import { normalizeAll } from '../transactions/normalize.js'
 import type { RawTransaction, Transaction } from '../transactions/types.js'
@@ -35,6 +35,8 @@ export interface TxPanelDeps {
   save: (data: TxPanelData) => void | Promise<void>
   /** Called with the pro-only CA whenever it changes, so the host can feed the engine. */
   onProRevenue?: (proRevenue: number) => void
+  /** Called after every render, so the host can refresh derived views (e.g. the fiscal table). */
+  onChanged?: () => void
 }
 
 /** Handle for the host to refresh the panel (e.g. after the vault unlocks). */
@@ -43,6 +45,8 @@ export interface TxPanelHandle {
   refresh(): void
   /** The current transactions (mainly for tests/inspection). */
   transactions(): Transaction[]
+  /** The current transactions, classified with the learned rules (for derived views). */
+  classified(): ClassifiedTransaction[]
 }
 
 function byId<T extends HTMLElement>(doc: Document, id: string): T | null {
@@ -105,6 +109,7 @@ export function initTxPanel(deps: TxPanelDeps): TxPanelHandle | null {
       }
     }
     deps.onProRevenue?.(vm.proRevenue)
+    deps.onChanged?.()
   }
 
   /** Applies a manual correction: learns it, persists, re-renders (so peers update too). */
@@ -157,5 +162,6 @@ export function initTxPanel(deps: TxPanelDeps): TxPanelHandle | null {
   return {
     refresh,
     transactions: () => transactions,
+    classified: () => classifyAll(transactions, learned),
   }
 }
