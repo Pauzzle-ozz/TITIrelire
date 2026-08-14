@@ -13,6 +13,7 @@ import type { ActivityType } from '../engine/types.js'
 import { applyForm, readForm } from './form-state.js'
 import { INVALID_INPUT_HTML, renderResult } from './render.js'
 import { renderRabbitSVG } from './sprite/rabbit.js'
+import { initTxPanel, type TxPanelHandle } from './tx-panel.js'
 import { initVaultPanel, type VaultPanelHandle } from './vault-panel.js'
 import {
   toMicroViewModel,
@@ -27,6 +28,8 @@ type Profile = 'micro' | 'particulier' | 'societe'
 
 /** The personal-space panel, once wired (null when the page has no vault container). */
 let vaultPanel: VaultPanelHandle | null = null
+/** The transactions panel, once wired (null when the page has no transactions container). */
+let txPanel: TxPanelHandle | null = null
 
 /** Minimum time the boot splash stays up, so the mascot is actually seen. */
 export const SPLASH_MIN_MS = 750
@@ -165,6 +168,21 @@ function applySnapshot(state: VaultState): void {
 }
 
 /**
+ * Feeds the professional-only CA derived from transactions into the micro revenue field.
+ * Only applies for the micro profile and only when there is real pro income (> 0), so it
+ * never wipes a manually typed CA when nothing was imported / everything is still unknown.
+ */
+function applyProRevenue(proRevenue: number): void {
+  if (proRevenue <= 0) return
+  if ((el<HTMLSelectElement>('profile').value as Profile) !== 'micro') return
+  const revenue = document.getElementById('revenue') as HTMLInputElement | null
+  if (revenue === null) return
+  revenue.value = String(Math.round(proRevenue))
+  compute()
+  void vaultPanel?.save() // persist the updated CA into the form snapshot
+}
+
+/**
  * Wires the personal-space panel when the page provides one. Kept optional so the simulator
  * still runs stateless (and secret-free) on pages without a vault. localStorage is only
  * touched when a `#vault` container exists, so headless/test pages are unaffected.
@@ -172,12 +190,28 @@ function applySnapshot(state: VaultState): void {
 function initVault(): void {
   if (document.getElementById('vault') === null) return
   const storage = new WebVaultStorage()
+  const now = (): string => new Date().toISOString()
+
+  // The transactions panel reads/writes its state through the open vault (or stays in-memory
+  // until a vault is unlocked). It is wired first so the vault's onOpened can refresh it.
+  txPanel = initTxPanel({
+    doc: document,
+    now,
+    load: () => {
+      const state = vaultPanel?.snapshot() ?? null
+      return { transactions: state?.transactions ?? [], learned: state?.learnedCategories ?? {} }
+    },
+    save: (data) => vaultPanel?.patch({ transactions: data.transactions, learnedCategories: data.learned }),
+    onProRevenue: applyProRevenue,
+  })
+
   void initVaultPanel({
     doc: document,
     storage,
-    now: () => new Date().toISOString(),
+    now,
     readForm,
     applySnapshot,
+    onOpened: () => txPanel?.refresh(),
   }).then((panel) => {
     vaultPanel = panel
   })

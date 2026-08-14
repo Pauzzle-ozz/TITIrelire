@@ -24,16 +24,22 @@ export interface VaultPanelDeps {
   readForm: (doc: Document) => { activeProfile: VaultProfile; profileInputs: ProfileInputs }
   /** Prefills the form from a snapshot and recomputes the result (host-provided). */
   applySnapshot: (state: VaultState) => void
+  /** Called once the vault is open (after create or unlock), e.g. to refresh other panels. */
+  onOpened?: () => void
   /** Optional WebCrypto override (defaults to the platform's). */
   cryptoDeps?: CryptoDeps
 }
 
-/** Handle returned to the host so it can autosave after form edits. */
+/** Handle returned to the host so it can autosave and share the open vault's state. */
 export interface VaultPanelHandle {
   /** Persists the current form into the vault; a no-op while locked. */
   save(): Promise<void>
   /** Whether a vault is currently open (unlocked). */
   isUnlocked(): boolean
+  /** The current vault state, or `null` while locked (for other panels to read). */
+  snapshot(): VaultState | null
+  /** Merges a partial update into the vault and saves it; a no-op while locked. */
+  patch(partial: Partial<VaultState>): Promise<void>
 }
 
 function byId<T extends HTMLElement>(doc: Document, id: string): T | null {
@@ -100,6 +106,7 @@ export async function initVaultPanel(deps: VaultPanelDeps): Promise<VaultPanelHa
       clearPassword()
       showUnlocked()
       setMsg('Espace déverrouillé.')
+      deps.onOpened?.()
     } catch {
       setMsg('Mot de passe incorrect ou données illisibles.')
     }
@@ -118,6 +125,7 @@ export async function initVaultPanel(deps: VaultPanelDeps): Promise<VaultPanelHa
       clearPassword()
       showUnlocked()
       setMsg('Espace créé et chiffré sur cet appareil.')
+      deps.onOpened?.()
     } catch {
       setMsg('Impossible de créer l’espace (un espace existe peut-être déjà).')
     }
@@ -140,5 +148,10 @@ export async function initVaultPanel(deps: VaultPanelDeps): Promise<VaultPanelHa
   return {
     save: persistForm,
     isUnlocked: () => vault !== null,
+    snapshot: () => (vault !== null ? vault.state : null),
+    patch: async (partial) => {
+      if (vault === null) return
+      await vault.save({ ...vault.state, ...partial }, now())
+    },
   }
 }

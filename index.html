@@ -150,6 +150,41 @@
       .vault-status { color: var(--ink); font-size: 0.9rem; margin: 0; flex: 1 1 12rem; }
       .vault-msg { color: var(--muted); font-size: 0.85rem; margin: 0.7rem 0 0; min-height: 1.1em; }
 
+      /* ── Transactions ──────────────────────────────────────────────────────── */
+      .tx-lede { color: var(--muted); font-size: 0.9rem; margin: 0 0 0.9rem; }
+      .tx-import { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem; }
+      .tx-import .full { grid-column: 1 / -1; }
+      #tx-input {
+        font: inherit; font-family: var(--font-mono); font-size: 0.82rem;
+        padding: 0.55rem 0.65rem; border: 1px solid var(--hair-strong);
+        border-radius: var(--radius-sm); background: #fff; color: inherit; resize: vertical;
+      }
+      .tx-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.9rem; }
+      #tx-import-btn {
+        font: inherit; font-weight: 600; cursor: pointer; padding: 0.55rem 1rem;
+        border-radius: var(--radius-sm); border: 1px solid var(--brand);
+        background: var(--brand); color: #fff;
+      }
+      #tx-import-btn:hover { filter: brightness(1.06); }
+      .tx-msg { color: var(--muted); font-size: 0.85rem; margin: 0.7rem 0; min-height: 1.1em; }
+      .tx-summary { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; margin: 0.4rem 0 0.8rem; }
+      .tx-stat { display: flex; flex-direction: column; }
+      .tx-stat-k { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; }
+      .tx-stat-v { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 700; }
+      .tx-nudge { background: var(--warn-soft); color: var(--warn); padding: 0.5rem 0.7rem; border-radius: var(--radius-sm); font-size: 0.85rem; margin: 0 0 0.8rem; }
+      .tx-empty { color: var(--muted); font-size: 0.9rem; }
+      .tx-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+      .tx-table th, .tx-table td { text-align: left; padding: 0.5rem 0.4rem; border-bottom: 1px solid var(--hair); vertical-align: middle; }
+      .tx-table .num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+      .tx-amount.income { color: var(--good); }
+      .tx-amount.expense { color: var(--ink); }
+      .tx-cat { font: inherit; font-size: 0.82rem; padding: 0.25rem 0.4rem; border: 1px solid var(--hair-strong); border-radius: var(--radius-sm); background: #fff; }
+      .tx-row.cat-pro .tx-cat { border-color: var(--good); }
+      .tx-row.cat-unknown .tx-cat { border-color: var(--warn); }
+      .tx-reason { color: var(--muted); font-size: 0.82rem; }
+      .tx-conf { display: inline-block; margin-left: 0.4rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+      @media (max-width: 620px) { .tx-import { grid-template-columns: 1fr; } .tx-table .tx-reason { display: none; } }
+
       /* ── Result: recommendation headline ───────────────────────────────────── */
       .reco {
         border: 1px solid var(--good);
@@ -390,6 +425,39 @@
             </div>
           </div>
         </form>
+      </section>
+
+      <section id="transactions" class="card" aria-labelledby="tx-h">
+        <h2 id="tx-h">Mes transactions</h2>
+        <p class="tx-lede">
+          Importez un relevé (CSV) : chaque mouvement est classé <strong>pro</strong> ou
+          <strong>perso</strong>, avec la raison. Corrigez une catégorie d'un clic — l'outil
+          la retient. Seuls les encaissements <strong>pro</strong> alimentent le CA.
+        </p>
+        <div class="tx-import">
+          <div class="field">
+            <label for="tx-preset">Format du CSV</label>
+            <select id="tx-preset">
+              <option value="generic" selected>Générique (id, date, amount, label, currency)</option>
+              <option value="bank_fr">Relevé bancaire FR (Débit/Crédit)</option>
+              <option value="qonto">Qonto</option>
+              <option value="stripe">Stripe</option>
+              <option value="paypal">PayPal</option>
+              <option value="shopify">Shopify</option>
+              <option value="sumup">SumUp</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="tx-input">Coller le CSV</label>
+            <textarea id="tx-input" rows="4" placeholder="id,date,amount,label,currency&#10;t1,2026-03-01,5000,Facture client,EUR"></textarea>
+          </div>
+          <div class="tx-actions">
+            <input id="tx-file" type="file" accept=".csv,text/csv" />
+            <button id="tx-import-btn" type="button">Importer</button>
+          </div>
+        </div>
+        <p id="tx-msg" class="tx-msg" role="status" aria-live="polite"></p>
+        <div id="tx-table"></div>
       </section>
 
       <div id="result" aria-live="polite"></div>
