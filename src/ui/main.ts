@@ -148,6 +148,7 @@ function renderDashboardRegion(profile: Profile): void {
   }
   region.innerHTML = renderDashboard({
     unlocked: vaultPanel?.isUnlocked() ?? false,
+    spaceName: vaultPanel?.spaceName() ?? null,
     profileLabel: profileLabel(profile),
     optimisationTotal,
   })

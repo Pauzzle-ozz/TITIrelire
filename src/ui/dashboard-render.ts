@@ -9,6 +9,8 @@ import { formatEuro } from './tx-view-model.js'
 export interface DashboardData {
   /** Whether the personal space is currently unlocked. */
   unlocked: boolean
+  /** Name of the open space, when unlocked. */
+  spaceName?: string | null
   /** Human label of the active profile. */
   profileLabel: string
   /** Indicative total of identified optimisations for the active profile (euros/year). */
@@ -30,7 +32,12 @@ const NAV_CARDS: readonly NavCard[] = [
 
 /** Renders the dashboard overview. */
 export function renderDashboard(data: DashboardData): string {
-  const espace = data.unlocked ? 'Déverrouillé ✓' : 'Verrouillé'
+  // Raw text; the template escapes it once below.
+  const espace = data.unlocked
+    ? data.spaceName !== undefined && data.spaceName !== null && data.spaceName !== ''
+      ? `${data.spaceName} ✓`
+      : 'Déverrouillé ✓'
+    : 'Verrouillé'
   const total =
     data.optimisationTotal > 0 ? `${escapeHtml(formatEuro(data.optimisationTotal))}` : '—'
   const cards = NAV_CARDS.map(

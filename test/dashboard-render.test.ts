@@ -20,6 +20,17 @@ describe('renderDashboard', () => {
     expect(renderDashboard({ unlocked: false, profileLabel: 'x', optimisationTotal: 0 })).toContain('Verrouillé')
   })
 
+  it('shows the open space name when provided', () => {
+    const html = renderDashboard({ unlocked: true, spaceName: 'Mon activité', profileLabel: 'x', optimisationTotal: 0 })
+    expect(html).toContain('Mon activité')
+  })
+
+  it('escapes the space name', () => {
+    const html = renderDashboard({ unlocked: true, spaceName: '<b>x</b>', profileLabel: 'x', optimisationTotal: 0 })
+    expect(html).not.toContain('<b>x</b>')
+    expect(html).toContain('&lt;b&gt;')
+  })
+
   it('renders navigation cards to every page', () => {
     const html = renderDashboard({ unlocked: false, profileLabel: 'x', optimisationTotal: 0 })
     for (const route of ['espace', 'situation', 'transactions', 'resultats']) {
