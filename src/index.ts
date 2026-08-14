@@ -157,3 +157,7 @@ export {
 export { classifyTransaction, classifyAll } from './classify/classify.js'
 export type { CategoryTotals, ClassifiedSummary } from './classify/aggregate.js'
 export { aggregateByCategory, proRevenue } from './classify/aggregate.js'
+
+// ── Advice engine (transparent optimisation) ──────────────────────────────────
+export type { Advice, AdviceKind } from './advice/types.js'
+export { adviseMicro, totalEstimatedGain } from './advice/micro.js'
