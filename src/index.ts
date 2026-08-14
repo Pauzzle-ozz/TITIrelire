@@ -158,6 +158,10 @@ export { classifyTransaction, classifyAll } from './classify/classify.js'
 export type { CategoryTotals, ClassifiedSummary } from './classify/aggregate.js'
 export { aggregateByCategory, proRevenue } from './classify/aggregate.js'
 
+// ── Régime réel (BIC/BNC) + micro-vs-réel ─────────────────────────────────────
+export type { ReelInput, ReelResult, MicroReelComparison } from './engine/reel.js'
+export { simulateReel, compareMicroReel, ESTIMATED_TNS_RATE } from './engine/reel.js'
+
 // ── Accounting (ledger / compte de résultat) ──────────────────────────────────
 export type { ChargeCategory, ProduitCategory, LedgerLine, Ledger } from './accounting/ledger.js'
 export {

@@ -7,6 +7,7 @@
  * {@link Advice} — a number the user can trace, or a clearly-labelled alert/info.
  */
 import { compare, type CompareInput, type Comparison } from '../engine/compare.js'
+import { compareMicroReel } from '../engine/reel.js'
 import { microThresholds } from '../engine/simulate.js'
 import type { IncomeTaxMode } from '../engine/types.js'
 import { eur, round2, sortAdvice } from './shared.js'
@@ -32,7 +33,7 @@ function modeLabel(mode: IncomeTaxMode): string {
  *
  * @throws RangeError on invalid input (delegated to {@link compare}).
  */
-export function adviseMicro(input: CompareInput): Advice[] {
+export function adviseMicro(input: CompareInput, charges?: number): Advice[] {
   const advice: Advice[] = []
   const comparison = compare(input)
 
@@ -123,16 +124,39 @@ export function adviseMicro(input: CompareInput): Advice[] {
     })
   }
 
-  // 5. Régime réel — honest, unquantified pointer (no réel model yet).
-  advice.push({
-    id: 'reel-info',
-    kind: 'info',
-    title: 'Micro ou réel ?',
-    detail:
-      `Le régime micro applique un abattement forfaitaire. Si vos charges réelles dépassent cet ` +
-      `abattement, le régime réel pourrait réduire votre base imposable (non simulé ici).`,
-    ruleRef: 'micro . abattement',
-  })
+  // 5. Régime réel — quantified when real charges are known, else an honest pointer.
+  if (charges !== undefined && charges > 0) {
+    const mr = compareMicroReel(input, charges)
+    if (mr.recommended === 'reel' && mr.netGain > 0) {
+      advice.push({
+        id: 'reel',
+        kind: 'optimisation',
+        title: 'Passer au régime réel',
+        detail: `${mr.explanation} (cotisations TNS estimées — à confirmer).`,
+        estimatedGain: mr.netGain,
+        ruleRef: 'régime réel',
+      })
+    } else {
+      advice.push({
+        id: 'reel-info',
+        kind: 'info',
+        title: 'Micro reste avantageux',
+        detail: mr.explanation,
+        ruleRef: 'micro . abattement',
+      })
+    }
+  } else {
+    advice.push({
+      id: 'reel-info',
+      kind: 'info',
+      title: 'Micro ou réel ?',
+      detail:
+        `Le régime micro applique un abattement forfaitaire. Si vos charges réelles dépassent cet ` +
+        `abattement, le régime réel pourrait réduire votre base imposable — importez vos ` +
+        `transactions pour le chiffrer.`,
+      ruleRef: 'micro . abattement',
+    })
+  }
 
   return sortAdvice(advice)
 }
