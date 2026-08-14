@@ -4,7 +4,7 @@ import { NAME, VERSION } from '../src/index.js'
 
 describe('project scaffold', () => {
   it('exposes the canonical project name', () => {
-    expect(NAME).toBe("TI'TIrelire")
+    expect(NAME).toBe("TITI'relire")
   })
 
   it('exposes a semver-looking version', () => {

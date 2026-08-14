@@ -4,7 +4,7 @@
  * The rules are written in {@link https://publi.codes | publicodes}, the open,
  * explainable rule language maintained by the French state (URSSAF / betagouv).
  * Keeping the legal parameters here — declaratively, separate from the application
- * code — is what makes TI'TIrelire transparent *and* maintainable: when a finance
+ * code — is what makes TITI'relire transparent *and* maintainable: when a finance
  * act changes a rate, this file changes, not the engine.
  *
  * Every figure below is cross-checked against at least two independent sources;

@@ -1,5 +1,5 @@
 /**
- * TI'TIrelire mascot — a dwarf *lionhead* rabbit in profile, facing left (erect ear,
+ * TITI'relire mascot — a dwarf *lionhead* rabbit in profile, facing left (erect ear,
  * fluffy mane), drawn to match the owner's photo. It is the app's logo, favicon and the
  * frame source for the loading animation.
  *
@@ -168,7 +168,7 @@ export interface RabbitRenderOptions {
  * @throws RangeError if `frame` is out of range (see {@link rabbitFrameMatrix}).
  */
 export function renderRabbitSVG(frame = 0, opts: RabbitRenderOptions = {}): string {
-  const title = opts.title ?? "TI'TIrelire"
+  const title = opts.title ?? "TITI'relire"
   const rects = spriteRects(rabbitFrameMatrix(frame))
 
   const size =

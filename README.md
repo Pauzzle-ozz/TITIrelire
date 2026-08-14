@@ -1,6 +1,6 @@
 <div align="center">
 
-# TI'TIrelire
+# TITI'relire
 
 **A small, honest tool for your money.** 🐷
 
@@ -11,9 +11,9 @@
 
 ---
 
-## What is TI'TIrelire?
+## What is TITI'relire?
 
-TI'TIrelire ("tirelire" is French for *piggy bank*) is an open-source tool to make personal
+TITI'relire ("tirelire" is French for *piggy bank*) is an open-source tool to make personal
 and business taxes **simple and transparent — from what you enter to the result**. Instead of
 a black box, it shows the maths line by line, and tells you how to keep more of your money.
 
@@ -26,7 +26,7 @@ explained, plus **which option is best for you** and how many euros it saves:
 It is **local-first**: every calculation runs in your browser. No account, no server, no data
 leaves your device.
 
-> ⚠️ **Not tax advice.** TI'TIrelire is a decision-aid built on public rules; always confirm
+> ⚠️ **Not tax advice.** TITI'relire is a decision-aid built on public rules; always confirm
 > with an accountant or the official services for your situation.
 
 ## Features
@@ -68,7 +68,7 @@ console.log(advice.recommended, advice.netGain, advice.explanation)
 
 ## Connecting your data (early)
 
-To avoid retyping your turnover, TI'TIrelire can ingest your transactions and compute the
+To avoid retyping your turnover, TITI'relire can ingest your transactions and compute the
 CA for you. It normalizes any source into one canonical `Transaction` model, then feeds the
 engine:
 

@@ -121,7 +121,7 @@ describe('renderRabbitSVG — output', () => {
     expect(svg.startsWith('<svg')).toBe(true)
     expect(svg.endsWith('</svg>')).toBe(true)
     expect(svg).toContain('role="img"')
-    expect(svg).toMatch(/<title>TI(?:&#39;|')TIrelire<\/title>/) // apostrophe may be escaped
+    expect(svg).toMatch(/<title>TITI(?:&#39;|')relire<\/title>/) // apostrophe may be escaped
     expect(svg).toContain('viewBox="0 0 32 30"')
     expect(svg).toContain('<rect')
     // No transparent pixels leaked as undefined/empty fills.

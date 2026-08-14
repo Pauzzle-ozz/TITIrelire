@@ -1,6 +1,6 @@
-# Contributing to TI'TIrelire
+# Contributing to TITI'relire
 
-First off — thank you for taking the time to contribute! 🐷 TI'TIrelire is open source
+First off — thank you for taking the time to contribute! 🐷 TITI'relire is open source
 (Apache 2.0) and welcomes contributions of all sizes.
 
 ## Code of Conduct

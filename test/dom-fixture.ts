@@ -6,7 +6,7 @@
 export const INDEX_BODY_HTML = `
   <div id="splash" class="splash" aria-hidden="true">
     <div id="splash-rabbit" class="splash-rabbit"></div>
-    <p class="splash-word">TI'TIrelire</p>
+    <p class="splash-word">TITI'relire</p>
   </div>
   <main>
     <div id="brand-mark"></div>

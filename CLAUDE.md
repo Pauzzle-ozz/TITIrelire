@@ -1,6 +1,6 @@
 # CLAUDE.md — Guide de travail de l'agent
 
-Ce fichier définit **comment travailler** sur le projet **TI'TIrelire**. Il est lu au
+Ce fichier définit **comment travailler** sur le projet **TITI'relire**. Il est lu au
 démarrage de chaque session. Il fait autorité : en cas de doute, ces règles priment sur
 l'habitude.
 

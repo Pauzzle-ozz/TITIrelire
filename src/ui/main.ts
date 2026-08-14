@@ -108,12 +108,12 @@ function compute(): void {
 /** Places the static rabbit logo in the header, when the mark container is present. */
 function mountBrand(): void {
   const mark = document.getElementById('brand-mark')
-  if (mark !== null) mark.innerHTML = renderRabbitSVG(0, { className: 'rabbit', title: "TI'TIrelire" })
+  if (mark !== null) mark.innerHTML = renderRabbitSVG(0, { className: 'rabbit', title: "TITI'relire" })
 }
 
 /** Sets the favicon to the rabbit sprite — one mascot, one source of truth. */
 function setFavicon(): void {
-  const svg = renderRabbitSVG(0, { background: '#fbf8f1', title: "TI'TIrelire" })
+  const svg = renderRabbitSVG(0, { background: '#fbf8f1', title: "TITI'relire" })
   const href = `data:image/svg+xml,${encodeURIComponent(svg)}`
   let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
   if (link === null) {

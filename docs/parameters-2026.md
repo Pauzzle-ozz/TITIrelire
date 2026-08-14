@@ -6,7 +6,7 @@ This is the sourced reference for every figure hard-coded in the fiscal engines
 the salaried-individual and SASU profiles). Each value was checked against public sources
 (see below) in August 2026. **This is not tax advice**; it is a best-effort,
 transparent model. If you spot an error, please open an issue or a PR — the
-whole point of TI'TIrelire is that the numbers are auditable.
+whole point of TITI'relire is that the numbers are auditable.
 
 > Scope of V1: the four main micro-entrepreneur categories, income tax (progressive scale
 > *or* flat option), social contributions, CFP, and the main thresholds. Out of scope for

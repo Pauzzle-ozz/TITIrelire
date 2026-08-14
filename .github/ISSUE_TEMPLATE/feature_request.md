@@ -1,6 +1,6 @@
 ---
 name: 💡 Feature request
-about: Suggest an idea for TI'TIrelire
+about: Suggest an idea for TITI'relire
 title: "[Feature] "
 labels: enhancement
 assignees: ''

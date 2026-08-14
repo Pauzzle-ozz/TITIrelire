@@ -1,6 +1,6 @@
 # Architecture & roadmap
 
-This document describes how TI'TIrelire is built and where it is going. It is the map that
+This document describes how TITI'relire is built and where it is going. It is the map that
 keeps the two parallel workstreams — **broader fiscal coverage** and **data connection** —
 from drifting apart.
 

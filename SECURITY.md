@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-We take the security of TI'TIrelire seriously. If you believe you have found a security
+We take the security of TITI'relire seriously. If you believe you have found a security
 vulnerability, please help us by disclosing it responsibly.
 
 **Please do not report security vulnerabilities through public GitHub issues.**
@@ -29,10 +29,10 @@ currently supported. This section will be updated once versioned releases exist.
 
 ## Scope
 
-Since TI'TIrelire deals with money-related data, we pay particular attention to:
+Since TITI'relire deals with money-related data, we pay particular attention to:
 
 - Handling and storage of any sensitive or personal data.
 - Input validation and injection risks.
 - Dependency vulnerabilities.
 
-Thank you for helping keep TI'TIrelire and its users safe.
+Thank you for helping keep TITI'relire and its users safe.
