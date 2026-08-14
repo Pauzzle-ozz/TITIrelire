@@ -42,9 +42,10 @@ leaves your device.
 - 🧮 **Accurate & auditable** — 2026 parameters, checked against public sources and
   documented in [`docs/parameters-2026.md`](./docs/parameters-2026.md).
 - 🔒 **Local-first** — runs entirely in the browser; nothing is sent anywhere.
-- 🗄️ **Personal space (optional)** — save your inputs and imported transactions so you don't
-  re-type them. The data is encrypted on your device with a master password (AES-256-GCM);
-  it never leaves the machine, and losing the password means it's unrecoverable.
+- 🗄️ **Personal spaces (optional)** — save your inputs and imported transactions so you don't
+  re-type them. Create **several named spaces** (perso, activity…) and switch between them; each
+  is encrypted separately on your device with its own master password (AES-256-GCM), never
+  leaves the machine, and losing the password means it's unrecoverable.
 - 🏷️ **Auto pro/perso sorting** — import a CSV statement and each movement is classified
   professional or personal, with the reason shown. Correct a category in one click and the
   tool remembers it; only professional income counts toward your turnover.

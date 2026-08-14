@@ -40,14 +40,16 @@ from drifting apart.
   feeds the engine (`simulateFromTransactions` / `compareFromTransactions`).
   - **Importers** parse files/exports (CSV done — universal, local-first).
   - **Connectors** (`TransactionSource`) pull from live APIs (Stripe done, as the reference).
-- **Personal space (vault)** — an optional, encrypted local store (`src/vault`) so the user
-  keeps their data across sessions without re-typing. The whole state (saved form inputs per
-  profile + imported transactions) is serialized and encrypted as **one AES-256-GCM blob**,
-  the key derived from a **master password** (PBKDF2-SHA256). Nothing secret is stored and
-  nothing leaves the device. A small `VaultStorage` port (in-memory / `localStorage` today,
-  IndexedDB or a Tauri/OS-keychain store tomorrow) holds the blob; `Vault.open/save` +
+- **Personal spaces (vault)** — an optional, encrypted local store (`src/vault`) so the user
+  keeps their data across sessions without re-typing. A **space** is a named, password-protected
+  vault; **several can coexist** (perso, activité…), each an independent AES-256-GCM blob under
+  its own key, listed by a non-secret `SpaceRegistry` (id + name). The state (saved form inputs
+  per fiscal profile + imported transactions + learned categories) is serialized and encrypted,
+  the key derived from that space's **master password** (PBKDF2-SHA256). Nothing secret is
+  stored and nothing leaves the device. A small `VaultStorage` port (in-memory / `localStorage`
+  today, IndexedDB or a Tauri/OS-keychain store tomorrow) holds each blob; `Vault.open/save` +
   `migrate()` (schema-versioned) tie it together. The UI panel is **opt-in**: no `#vault`
-  container → the simulator runs stateless and secret-free, as before.
+  container → the simulator runs stateless and secret-free.
 - **Classification (pro vs perso)** — `src/classify` tags each transaction so the engine only
   counts professional income. A first-match cascade (learned corrections → deterministic FR
   rules → heuristics → `unknown`) yields an explainable verdict (category + confidence +
