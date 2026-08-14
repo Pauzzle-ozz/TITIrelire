@@ -1,13 +1,18 @@
 /**
  * UI wiring: reads the form for the selected profile, runs the computation in the browser,
  * and renders the transparent result. No network, no storage — everything stays on device.
+ *
+ * Import the engines directly (not the top-level barrel) so the browser bundle's module
+ * graph never references the connectors — secret-handling code cannot ship to the client.
+ * The presentation (HTML strings) lives in ./render.js and the mascot in ./sprite/*.
  */
-// Import the engines directly (not the top-level barrel) so the browser bundle's module
-// graph never references the connectors — secret-handling code cannot ship to the client.
 import { compare, type CompareInput } from '../engine/compare.js'
 import { comparePER, simulateParticulier, type ParticulierInput } from '../engine/particulier.js'
 import { compareDividendes, type SocieteInput } from '../engine/societe.js'
 import type { ActivityType } from '../engine/types.js'
+import { INVALID_INPUT_HTML, renderResult } from './render.js'
+import { mountRabbit } from './sprite/animator.js'
+import { renderRabbitSVG } from './sprite/rabbit.js'
 import {
   toMicroViewModel,
   toParticulierViewModel,
@@ -16,6 +21,11 @@ import {
 } from './view-model.js'
 
 type Profile = 'micro' | 'particulier' | 'societe'
+
+/** Minimum time the boot splash stays up, so the mascot is actually seen. */
+export const SPLASH_MIN_MS = 750
+/** How long the splash takes to fade before it is removed from the layout. */
+export const SPLASH_FADE_MS = 400
 
 function el<T extends HTMLElement>(id: string): T {
   const node = document.getElementById(id)
@@ -31,16 +41,6 @@ function num(id: string): number {
 function optNum(id: string): number | undefined {
   const raw = el<HTMLInputElement>(id).value.trim()
   return raw === '' ? undefined : Number(raw)
-}
-
-/** Minimal HTML escaping for text injected into the result markup. */
-function escape(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }
 
 function readMicro(): CompareInput {
@@ -87,52 +87,6 @@ function buildViewModel(profile: Profile): ViewModel {
   return toMicroViewModel(compare(readMicro()))
 }
 
-function renderComparison(vm: ViewModel): string {
-  if (vm.comparison === undefined) return ''
-  const { title, columns, rows } = vm.comparison
-  const head = columns.map((c, i) => `<th${i === 0 ? '' : ' class="num"'}>${escape(c)}</th>`).join('')
-  const body = rows
-    .map(
-      (r) => `
-        <tr class="${r.recommended ? 'win' : ''}">
-          <td>${escape(r.label)}${r.recommended ? '<span class="badge">conseillé</span>' : ''}</td>
-          ${r.cells.map((c) => `<td class="num">${escape(c)}</td>`).join('')}
-        </tr>`,
-    )
-    .join('')
-  return `<div class="card"><h2>${escape(title)}</h2>
-    <table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`
-}
-
-function renderBreakdown(vm: ViewModel): string {
-  const lines = vm.breakdown
-    .map(
-      (line) => `
-        <div class="line">
-          <div class="row">
-            <span class="label">${escape(line.label)}</span>
-            <span class="amount">${escape(line.amount)}</span>
-          </div>
-          <div class="detail">${escape(line.detail)}</div>
-        </div>`,
-    )
-    .join('')
-  const rate =
-    vm.effectiveRate === undefined
-      ? ''
-      : `<div class="line"><div class="row">
-          <span class="label">${escape(vm.effectiveRateLabel ?? 'Taux de prélèvement effectif')}</span>
-          <span class="amount">${escape(vm.effectiveRate)}</span>
-        </div></div>`
-  return `<div class="card"><h2>Le détail, ligne par ligne</h2>${lines}${rate}</div>`
-}
-
-function renderWarnings(vm: ViewModel): string {
-  if (vm.warnings.length === 0) return ''
-  const items = vm.warnings.map((w) => `<li class="${escape(w.level)}">${escape(w.message)}</li>`).join('')
-  return `<div class="card"><h2>À garder en tête</h2><ul class="warnings">${items}</ul></div>`
-}
-
 /** Shows the field group for the selected profile and hides the others. */
 function toggleFields(profile: Profile): void {
   for (const p of ['micro', 'particulier', 'societe'] as Profile[]) {
@@ -140,33 +94,65 @@ function toggleFields(profile: Profile): void {
   }
 }
 
-function render(): void {
+/** Reads the form, computes, and renders the result (or an inline validation message). */
+function compute(): void {
   const profile = el<HTMLSelectElement>('profile').value as Profile
   const result = el('result')
-  let vm: ViewModel
   try {
-    vm = buildViewModel(profile)
+    result.innerHTML = renderResult(buildViewModel(profile))
   } catch {
-    result.innerHTML = '<div class="card"><p>Vérifiez vos saisies (montants ≥ 0, parts ≥ 1).</p></div>'
-    return
+    result.innerHTML = INVALID_INPUT_HTML
   }
-
-  result.innerHTML = `
-    <div class="card reco">
-      <h2>${escape(vm.recommendationTitle)}</h2>
-      <div class="net">${escape(vm.netHighlight)}</div>
-      <div class="sub">${escape(vm.netLabel)} — ${escape(vm.recommendationDetail)}</div>
-    </div>
-    ${renderComparison(vm)}
-    ${renderBreakdown(vm)}
-    ${renderWarnings(vm)}`
 }
 
-el('profile').addEventListener('change', () => {
-  toggleFields(el<HTMLSelectElement>('profile').value as Profile)
-  render()
-})
-el('form').addEventListener('input', render)
+/** Places the static rabbit logo in the header, when the mark container is present. */
+function mountBrand(): void {
+  const mark = document.getElementById('brand-mark')
+  if (mark !== null) mark.innerHTML = renderRabbitSVG(0, { className: 'rabbit', title: "TI'TIrelire" })
+}
 
+/** Sets the favicon to the rabbit sprite — one mascot, one source of truth. */
+function setFavicon(): void {
+  const svg = renderRabbitSVG(0, { background: '#fbf8f1', title: "TI'TIrelire" })
+  const href = `data:image/svg+xml,${encodeURIComponent(svg)}`
+  let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+  if (link === null) {
+    link = document.createElement('link')
+    link.rel = 'icon'
+    document.head.appendChild(link)
+  }
+  link.type = 'image/svg+xml'
+  link.href = href
+}
+
+/** Boot splash: an animated hopping rabbit that fades once the app is ready. Optional. */
+function runSplash(): void {
+  const splash = document.getElementById('splash')
+  const box = document.getElementById('splash-rabbit')
+  if (splash === null || box === null) return
+  const animator = mountRabbit(box, { title: 'Chargement…', className: 'rabbit' })
+  setTimeout(() => {
+    splash.classList.add('is-hidden')
+    animator.stop()
+    setTimeout(() => {
+      splash.hidden = true
+    }, SPLASH_FADE_MS)
+  }, SPLASH_MIN_MS)
+}
+
+function wire(): void {
+  el('profile').addEventListener('change', () => {
+    toggleFields(el<HTMLSelectElement>('profile').value as Profile)
+    compute()
+  })
+  el('form').addEventListener('input', compute)
+}
+
+// ── Boot ────────────────────────────────────────────────────────────────────────
+// Schedule the splash-hide first, so it always clears even if a later step throws.
+runSplash()
+setFavicon()
+mountBrand()
 toggleFields(el<HTMLSelectElement>('profile').value as Profile)
-render()
+compute()
+wire()
