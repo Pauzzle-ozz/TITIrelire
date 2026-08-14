@@ -104,7 +104,8 @@ describe('auth gate (happy-dom)', () => {
     click('vault-create')
     await waitFor(unlockedVisible)
     expect(locked()).toBe(false)
-    expect(pageActive('accueil')).toBe(true)
+    // Navigation to accueil goes through an async hashchange — wait for it.
+    await waitFor(() => pageActive('accueil'))
 
     click('vault-lock')
     expect(locked()).toBe(true)

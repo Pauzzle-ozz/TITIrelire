@@ -13,9 +13,11 @@ import type { ActivityType } from '../engine/types.js'
 import { adviseMicro } from '../advice/micro.js'
 import { adviseParticulier } from '../advice/particulier.js'
 import { adviseSociete } from '../advice/societe.js'
+import { projectAdvice } from '../advice/projection.js'
 import { totalEstimatedGain } from '../advice/shared.js'
 import type { Advice } from '../advice/types.js'
 import { renderAdvice } from './advice-render.js'
+import { renderProjection } from './projection-render.js'
 import { buildLedger } from '../accounting/ledger.js'
 import { tvaStatus, type TvaStatus } from '../engine/tva.js'
 import { renderDashboard } from './dashboard-render.js'
@@ -168,7 +170,8 @@ function renderFiscalRegion(): void {
 function renderAdviceRegion(profile: Profile): void {
   const region = document.getElementById('advice')
   if (region === null) return
-  region.innerHTML = renderAdvice(adviceFor(profile))
+  const advice = adviceFor(profile)
+  region.innerHTML = renderAdvice(advice) + renderProjection(projectAdvice(advice))
 }
 
 /** Human label for a profile, shared by the dashboard. */
