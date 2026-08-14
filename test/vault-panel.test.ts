@@ -1,196 +1,206 @@
 // @vitest-environment happy-dom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { readForm } from '../src/ui/form-state.js'
-import { initVaultPanel, type VaultPanelHandle } from '../src/ui/vault-panel.js'
-import { MemoryVaultStorage } from '../src/vault/storage.js'
+import { SpaceRegistry } from '../src/vault/registry.js'
+import { MemoryVaultStorage, type WebStorageLike } from '../src/vault/storage.js'
 import type { VaultState } from '../src/vault/types.js'
+import { initVaultPanel, type VaultPanelDeps, type VaultPanelHandle } from '../src/ui/vault-panel.js'
 
-/** Full DOM: the vault panel plus the micro form fields the panel reads/writes. */
+/** DOM mirroring the espace page: space picker, create form, unlocked view. */
 function setupDom(): void {
   document.body.innerHTML = `
     <section id="vault">
       <div id="vault-locked">
-        <input id="vault-password" type="password" />
-        <button id="vault-unlock" type="button" hidden>Unlock</button>
-        <button id="vault-create" type="button" hidden>Create</button>
+        <div id="vault-existing">
+          <select id="vault-space-select"></select>
+          <input id="vault-password" type="password" />
+          <button id="vault-unlock" type="button">Déverrouiller</button>
+        </div>
+        <input id="vault-name" type="text" />
+        <input id="vault-newpass" type="password" />
+        <button id="vault-create" type="button">Créer</button>
       </div>
       <div id="vault-unlocked" hidden>
-        <button id="vault-lock" type="button">Lock</button>
+        <span id="vault-current-name"></span>
+        <button id="vault-lock" type="button">Verrouiller</button>
+        <button id="vault-switch" type="button">Changer</button>
       </div>
       <p id="vault-msg"></p>
-    </section>
-    <form id="form">
-      <select id="profile"><option value="micro" selected>Micro</option>
-        <option value="particulier">P</option><option value="societe">S</option></select>
-      <div id="fields-micro">
-        <select id="activity"><option value="prestations_bnc" selected>BNC</option></select>
-        <input id="revenue" type="number" value="40000" />
-        <input id="parts" type="number" value="1" />
-        <input id="other" type="number" value="0" />
-        <input id="acre" type="checkbox" />
-        <input id="acreReduced" type="checkbox" />
-      </div>
-      <div id="fields-particulier">
-        <input id="p-salaire" value="0" /><input id="p-parts" value="1" />
-        <input id="p-frais" /><input id="p-per" value="0" /><input id="p-autres" value="0" />
-      </div>
-      <div id="fields-societe">
-        <input id="s-benefice" value="0" /><input id="s-dividendes" />
-        <input id="s-parts" value="1" /><input id="s-autres" value="0" />
-        <input id="s-reduced" type="checkbox" />
-      </div>
-    </form>`
+    </section>`
 }
 
-const NOW = () => '2026-08-14T12:00:00.000Z'
+function fakeStore(): WebStorageLike {
+  const map = new Map<string, string>()
+  return {
+    getItem: (k) => (map.has(k) ? (map.get(k) as string) : null),
+    setItem: (k, v) => void map.set(k, v),
+    removeItem: (k) => void map.delete(k),
+  }
+}
 
+/** Builds panel deps with an in-memory registry and per-space memory storage. */
+function makeDeps(over: Partial<VaultPanelDeps> = {}): VaultPanelDeps {
+  const storages = new Map<string, MemoryVaultStorage>()
+  let counter = 0
+  return {
+    doc: document,
+    now: () => '2026-08-14T12:00:00.000Z',
+    registry: new SpaceRegistry(fakeStore()),
+    makeStorage: (id) => {
+      let s = storages.get(id)
+      if (s === undefined) {
+        s = new MemoryVaultStorage()
+        storages.set(id, s)
+      }
+      return s
+    },
+    genId: () => `id-${(counter += 1)}`,
+    readForm: () => ({ activeProfile: 'micro', profileInputs: { micro: { revenue: '40000' } } }),
+    applySnapshot: () => {},
+    ...over,
+  }
+}
+
+const val = (id: string): HTMLInputElement => document.getElementById(id) as HTMLInputElement
+function set(id: string, value: string): void {
+  val(id).value = value
+}
 function click(id: string): void {
   document.getElementById(id)?.dispatchEvent(new Event('click', { bubbles: true }))
 }
-
-/** Awaits until `predicate()` is true (crypto handlers are async), or fails after a budget. */
-async function waitFor(predicate: () => boolean): Promise<void> {
+async function waitFor(pred: () => boolean): Promise<void> {
   for (let i = 0; i < 50; i += 1) {
-    if (predicate()) return
+    if (pred()) return
     await new Promise((r) => setTimeout(r, 5))
   }
   throw new Error('waitFor timed out')
 }
+const unlockedVisible = (): boolean => !(document.getElementById('vault-unlocked') as HTMLElement).hidden
 
 beforeEach(setupDom)
 
-describe('initVaultPanel presence gate', () => {
-  it('returns null when there is no #vault container', async () => {
+describe('presence gate', () => {
+  it('returns null without a #vault container', () => {
     document.getElementById('vault')?.remove()
-    const handle = await initVaultPanel({
-      doc: document,
-      storage: new MemoryVaultStorage(),
-      now: NOW,
-      readForm,
-      applySnapshot: () => {},
-    })
-    expect(handle).toBeNull()
+    expect(initVaultPanel(makeDeps())).toBeNull()
   })
 
-  it('offers "create" when no vault exists yet', async () => {
-    await initVaultPanel({
-      doc: document,
-      storage: new MemoryVaultStorage(),
-      now: NOW,
-      readForm,
-      applySnapshot: () => {},
-    })
-    expect((document.getElementById('vault-create') as HTMLButtonElement).hidden).toBe(false)
-    expect((document.getElementById('vault-unlock') as HTMLButtonElement).hidden).toBe(true)
+  it('hides the existing-spaces block when there are none', () => {
+    initVaultPanel(makeDeps())
+    expect((document.getElementById('vault-existing') as HTMLElement).hidden).toBe(true)
   })
 })
 
-describe('create → autosave → lock → unlock lifecycle', () => {
-  it('creates a vault, persists edits, and restores them after a lock/unlock', async () => {
-    const storage = new MemoryVaultStorage()
-    const applySnapshot = vi.fn<(s: VaultState) => void>()
-
-    const handle = (await initVaultPanel({
-      doc: document,
-      storage,
-      now: NOW,
-      readForm,
-      applySnapshot,
-    })) as VaultPanelHandle
-
-    // Create the space.
-    ;(document.getElementById('vault-password') as HTMLInputElement).value = 'master-pw-123'
+describe('create a named space', () => {
+  it('requires a name', async () => {
+    initVaultPanel(makeDeps())
+    set('vault-name', '')
+    set('vault-newpass', 'pw')
     click('vault-create')
-    // Wait for the handler to fully finish (unlocked section revealed), not just for the
-    // vault to be assigned — showUnlocked() runs a few awaits after isUnlocked() flips.
-    await waitFor(() => !(document.getElementById('vault-unlocked') as HTMLDivElement).hidden)
+    await waitFor(() => (document.getElementById('vault-msg')?.textContent ?? '').includes('nom'))
+    expect(unlockedVisible()).toBe(false)
+  })
+
+  it('requires a password', async () => {
+    initVaultPanel(makeDeps())
+    set('vault-name', 'Perso')
+    set('vault-newpass', '')
+    click('vault-create')
+    await waitFor(() => (document.getElementById('vault-msg')?.textContent ?? '').includes('mot de passe'))
+    expect(unlockedVisible()).toBe(false)
+  })
+
+  it('creates, registers, and unlocks the space', async () => {
+    const deps = makeDeps()
+    const handle = initVaultPanel(deps) as VaultPanelHandle
+    set('vault-name', 'Mon activité')
+    set('vault-newpass', 'secret-123')
+    click('vault-create')
+    await waitFor(unlockedVisible)
     expect(handle.isUnlocked()).toBe(true)
-    expect(await storage.load()).not.toBeNull()
-    // Password field is cleared after use (hygiene).
-    expect((document.getElementById('vault-password') as HTMLInputElement).value).toBe('')
-
-    // Edit the form and autosave.
-    ;(document.getElementById('revenue') as HTMLInputElement).value = '72000'
-    await handle.save()
-
-    // Lock.
-    click('vault-lock')
-    expect(handle.isUnlocked()).toBe(false)
-    expect((document.getElementById('vault-unlock') as HTMLButtonElement).hidden).toBe(false)
-
-    // A fresh panel over the same storage should now offer unlock and restore the data.
-    const applySnapshot2 = vi.fn<(s: VaultState) => void>()
-    const handle2 = (await initVaultPanel({
-      doc: document,
-      storage,
-      now: NOW,
-      readForm,
-      applySnapshot: applySnapshot2,
-    })) as VaultPanelHandle
-    ;(document.getElementById('vault-password') as HTMLInputElement).value = 'master-pw-123'
-    click('vault-unlock')
-    await waitFor(() => handle2.isUnlocked())
-
-    expect(applySnapshot2).toHaveBeenCalledTimes(1)
-    const restored = applySnapshot2.mock.calls[0]?.[0] as VaultState
-    expect(restored.profileInputs.micro?.['revenue']).toBe('72000')
+    expect(handle.spaceName()).toBe('Mon activité')
+    expect(deps.registry.list().map((s) => s.name)).toEqual(['Mon activité'])
+    expect(document.getElementById('vault-current-name')?.textContent).toBe('Mon activité')
   })
 })
 
-describe('error handling', () => {
-  it('shows a message and stays locked on a wrong password', async () => {
-    const storage = new MemoryVaultStorage()
-    // Seed a vault with a known password via a first panel.
-    const h1 = (await initVaultPanel({
-      doc: document,
-      storage,
-      now: NOW,
-      readForm,
-      applySnapshot: () => {},
-    })) as VaultPanelHandle
-    ;(document.getElementById('vault-password') as HTMLInputElement).value = 'right-pw'
+describe('multiple spaces: lock, list, switch, unlock', () => {
+  it('lists created spaces in the picker and unlocks the chosen one', async () => {
+    const deps = makeDeps()
+    const applySnapshot = vi.fn<(s: VaultState) => void>()
+    const handle = initVaultPanel({ ...deps, applySnapshot }) as VaultPanelHandle
+
+    // Create "Perso".
+    set('vault-name', 'Perso')
+    set('vault-newpass', 'pw-perso')
     click('vault-create')
-    await waitFor(() => h1.isUnlocked())
+    await waitFor(unlockedVisible)
     click('vault-lock')
 
-    const h2 = (await initVaultPanel({
-      doc: document,
-      storage,
-      now: NOW,
-      readForm,
-      applySnapshot: () => {},
-    })) as VaultPanelHandle
-    ;(document.getElementById('vault-password') as HTMLInputElement).value = 'wrong-pw'
+    // Create "Activité".
+    set('vault-name', 'Activité')
+    set('vault-newpass', 'pw-activite')
+    click('vault-create')
+    await waitFor(unlockedVisible)
+    click('vault-switch')
+
+    // Both spaces are listed.
+    const options = Array.from(document.querySelectorAll('#vault-space-select option')).map((o) => o.textContent)
+    expect(options).toEqual(['Perso', 'Activité'])
+
+    // Unlock "Perso" with its password.
+    const persoId = deps.registry.list().find((s) => s.name === 'Perso')!.id
+    ;(document.getElementById('vault-space-select') as HTMLSelectElement).value = persoId
+    set('vault-password', 'pw-perso')
+    applySnapshot.mockClear()
+    click('vault-unlock')
+    await waitFor(() => handle.isUnlocked())
+    expect(handle.spaceName()).toBe('Perso')
+    expect(applySnapshot).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps each space\'s data separate', async () => {
+    const deps = makeDeps()
+    const handle = initVaultPanel(deps) as VaultPanelHandle
+
+    set('vault-name', 'A')
+    set('vault-newpass', 'pa')
+    click('vault-create')
+    await waitFor(unlockedVisible)
+    await handle.patch({ transactions: [{ id: 'txA', date: '2026-01-01', amount: 10, currency: 'EUR', label: 'A', source: 't' }] })
+    click('vault-lock')
+
+    set('vault-name', 'B')
+    set('vault-newpass', 'pb')
+    click('vault-create')
+    await waitFor(unlockedVisible)
+    // Fresh space B has no transactions from A.
+    expect(handle.snapshot()?.transactions).toEqual([])
+  })
+
+  it('fails to unlock with the wrong password', async () => {
+    const deps = makeDeps()
+    const handle = initVaultPanel(deps) as VaultPanelHandle
+    set('vault-name', 'Perso')
+    set('vault-newpass', 'right')
+    click('vault-create')
+    await waitFor(unlockedVisible)
+    click('vault-lock')
+
+    const id = deps.registry.list()[0]!.id
+    ;(document.getElementById('vault-space-select') as HTMLSelectElement).value = id
+    set('vault-password', 'wrong')
     click('vault-unlock')
     await waitFor(() => (document.getElementById('vault-msg')?.textContent ?? '').includes('incorrect'))
-    expect(h2.isUnlocked()).toBe(false)
-  })
-
-  it('refuses to create with an empty password', async () => {
-    const handle = (await initVaultPanel({
-      doc: document,
-      storage: new MemoryVaultStorage(),
-      now: NOW,
-      readForm,
-      applySnapshot: () => {},
-    })) as VaultPanelHandle
-    ;(document.getElementById('vault-password') as HTMLInputElement).value = ''
-    click('vault-create')
-    await waitFor(() => (document.getElementById('vault-msg')?.textContent ?? '').includes('Choisis'))
     expect(handle.isUnlocked()).toBe(false)
   })
+})
 
-  it('save is a no-op while locked', async () => {
-    const storage = new MemoryVaultStorage()
-    const handle = (await initVaultPanel({
-      doc: document,
-      storage,
-      now: NOW,
-      readForm,
-      applySnapshot: () => {},
-    })) as VaultPanelHandle
+describe('locked handle', () => {
+  it('save and spaceName are inert while locked', async () => {
+    const handle = initVaultPanel(makeDeps()) as VaultPanelHandle
     await handle.save()
-    expect(await storage.load()).toBeNull()
+    expect(handle.spaceName()).toBeNull()
+    expect(handle.snapshot()).toBeNull()
   })
 })

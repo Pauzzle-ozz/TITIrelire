@@ -29,6 +29,7 @@ import {
   toSocieteViewModel,
   type ViewModel,
 } from './view-model.js'
+import { SpaceRegistry, spaceStorageKey } from '../vault/registry.js'
 import { WebVaultStorage } from '../vault/storage.js'
 import type { VaultState } from '../vault/types.js'
 
@@ -271,11 +272,12 @@ function applyProRevenue(proRevenue: number): void {
  */
 function initVault(): void {
   if (document.getElementById('vault') === null) return
-  const storage = new WebVaultStorage()
   const now = (): string => new Date().toISOString()
+  const registry = new SpaceRegistry()
+  const genId = (): string => globalThis.crypto.randomUUID()
 
-  // The transactions panel reads/writes its state through the open vault (or stays in-memory
-  // until a vault is unlocked). It is wired first so the vault's onOpened can refresh it.
+  // The transactions panel reads/writes its state through the open space (or stays in-memory
+  // until one is unlocked). It is wired first so the vault's onOpened can refresh it.
   txPanel = initTxPanel({
     doc: document,
     now,
@@ -287,15 +289,15 @@ function initVault(): void {
     onProRevenue: applyProRevenue,
   })
 
-  void initVaultPanel({
+  vaultPanel = initVaultPanel({
     doc: document,
-    storage,
     now,
+    registry,
+    makeStorage: (id) => new WebVaultStorage(undefined, spaceStorageKey(id)),
+    genId,
     readForm,
     applySnapshot,
     onOpened: () => txPanel?.refresh(),
-  }).then((panel) => {
-    vaultPanel = panel
   })
 }
 

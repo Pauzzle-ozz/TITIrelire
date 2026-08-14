@@ -127,8 +127,12 @@
         transition: filter 0.12s;
       }
       #vault button:hover { filter: brightness(1.06); }
-      #vault #vault-lock { background: #fff; color: var(--brand); }
+      #vault #vault-lock, #vault #vault-switch { background: #fff; color: var(--brand); }
       #vault button[hidden] { display: none; }
+      .vault-block { padding: 0.9rem 1rem; border: 1px solid var(--hair-strong); border-radius: var(--radius-sm); margin-bottom: 0.9rem; }
+      .vault-block[hidden] { display: none; }
+      .vault-h3 { margin: 0 0 0.7rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+      #vault-space-select { font: inherit; padding: 0.55rem 0.65rem; border: 1px solid var(--hair-strong); border-radius: var(--radius-sm); background: #fff; color: inherit; }
       .vault-status { color: var(--ink); font-size: 0.9rem; margin: 0; flex: 1 1 12rem; }
       .vault-msg { color: var(--muted); font-size: 0.85rem; margin: 0.7rem 0 0; min-height: 1.1em; }
 
@@ -378,24 +382,53 @@
         </header>
       <section id="vault" class="card">
         <p class="vault-lede">
-          Enregistrez vos données pour les retrouver sans les ressaisir. Elles sont
-          <strong>chiffrées avec votre mot de passe</strong> et ne quittent jamais cet
-          appareil. Perdre ce mot de passe rend les données irrécupérables : c'est le prix
-          d'un vrai chiffrement.
+          Un espace = <strong>un nom + un mot de passe</strong>. Créez-en autant que vous voulez
+          (Perso, Mon activité…) : chacun est <strong>chiffré séparément</strong> et ne quitte
+          jamais cet appareil. Perdre le mot de passe rend l'espace irrécupérable.
         </p>
-        <div id="vault-locked" class="vault-row">
-          <div class="field">
-            <label for="vault-password">Mot de passe de l'espace</label>
-            <input id="vault-password" type="password" autocomplete="current-password" />
+        <div id="vault-locked">
+          <div id="vault-existing" class="vault-block" hidden>
+            <h3 class="vault-h3">Déverrouiller un espace</h3>
+            <div class="vault-row">
+              <div class="field">
+                <label for="vault-space-select">Espace</label>
+                <select id="vault-space-select"></select>
+              </div>
+              <div class="field">
+                <label for="vault-password">Mot de passe</label>
+                <input id="vault-password" type="password" autocomplete="current-password" />
+              </div>
+              <div class="vault-actions">
+                <button id="vault-unlock" type="button">Déverrouiller</button>
+              </div>
+            </div>
           </div>
-          <div class="vault-actions">
-            <button id="vault-unlock" type="button" hidden>Déverrouiller</button>
-            <button id="vault-create" type="button" hidden>Créer mon espace</button>
+          <div class="vault-block">
+            <h3 class="vault-h3">Nouvel espace</h3>
+            <div class="vault-row">
+              <div class="field">
+                <label for="vault-name">Nom de l'espace</label>
+                <input id="vault-name" type="text" placeholder="Perso, Mon activité…" />
+              </div>
+              <div class="field">
+                <label for="vault-newpass">Mot de passe</label>
+                <input id="vault-newpass" type="password" autocomplete="new-password" />
+              </div>
+              <div class="vault-actions">
+                <button id="vault-create" type="button">Créer mon espace</button>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="vault-unlocked" class="vault-row" hidden>
-          <p class="vault-status">Espace déverrouillé — vos saisies sont enregistrées automatiquement.</p>
-          <button id="vault-lock" type="button">Verrouiller</button>
+        <div id="vault-unlocked" hidden>
+          <p class="vault-status">
+            Espace <strong id="vault-current-name"></strong> déverrouillé — vos saisies sont
+            enregistrées automatiquement.
+          </p>
+          <div class="vault-actions">
+            <button id="vault-lock" type="button">Verrouiller</button>
+            <button id="vault-switch" type="button">Changer d'espace</button>
+          </div>
         </div>
         <p id="vault-msg" class="vault-msg" role="status" aria-live="polite"></p>
       </section>
