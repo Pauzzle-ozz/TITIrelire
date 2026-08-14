@@ -95,6 +95,17 @@ describe('UI wiring (happy-dom)', () => {
     expect(result.innerHTML).toContain('Impôt sur les sociétés')
   })
 
+  it('shows an honest empty state (no demo computation) when the CA is blank', async () => {
+    await import('../src/ui/main.js')
+    const revenue = document.getElementById('revenue') as HTMLInputElement
+    revenue.value = ''
+    revenue.dispatchEvent(new Event('input', { bubbles: true }))
+    const result = document.getElementById('result')!
+    expect(result.innerHTML).toContain('Renseignez vos données réelles')
+    expect(result.innerHTML).not.toContain('Recommandation')
+    expect(document.getElementById('advice')!.innerHTML).toBe('')
+  })
+
   it('recomputes when an input changes', async () => {
     await import('../src/ui/main.js')
     const result = document.getElementById('result')!

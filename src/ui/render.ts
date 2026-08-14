@@ -84,3 +84,10 @@ export function renderResult(vm: ViewModel): string {
 /** The message shown when input is invalid (amounts ≥ 0, parts ≥ 1). */
 export const INVALID_INPUT_HTML =
   '<section class="card invalid" role="alert"><p>Vérifiez vos saisies : montants ≥ 0, parts ≥ 1.</p></section>'
+
+/**
+ * Shown when the user has not entered their real figures yet. The tool never invents data, so
+ * there is nothing to compute until then — an honest empty state instead of a demo result.
+ */
+export const EMPTY_STATE_HTML =
+  '<section class="card empty-state"><p>Renseignez vos données réelles pour voir votre situation fiscale — rien n’est calculé sur des exemples.</p></section>'

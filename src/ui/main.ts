@@ -18,8 +18,8 @@ import type { Advice } from '../advice/types.js'
 import { renderAdvice } from './advice-render.js'
 import { renderDashboard } from './dashboard-render.js'
 import { applyForm, readForm } from './form-state.js'
-import { INVALID_INPUT_HTML, renderResult } from './render.js'
-import { createRouter } from './router.js'
+import { EMPTY_STATE_HTML, INVALID_INPUT_HTML, renderResult } from './render.js'
+import { createRouter, type Router } from './router.js'
 import { renderRabbitSVG } from './sprite/rabbit.js'
 import { initTxPanel, type TxPanelHandle } from './tx-panel.js'
 import { initVaultPanel, type VaultPanelHandle } from './vault-panel.js'
@@ -154,17 +154,42 @@ function renderDashboardRegion(profile: Profile): void {
   })
 }
 
-/** Reads the form, computes, and renders the result (or an inline validation message). */
+/** The main monetary field that decides whether the user has entered real data, per profile. */
+function primaryFieldId(profile: Profile): string {
+  return profile === 'particulier' ? 'p-salaire' : profile === 'societe' ? 's-benefice' : 'revenue'
+}
+
+/** Whether the user has entered their real headline figure (else nothing is computed). */
+function hasData(profile: Profile): boolean {
+  const raw = el<HTMLInputElement>(primaryFieldId(profile)).value.trim()
+  if (raw === '') return false
+  const value = Number(raw)
+  return Number.isFinite(value) && value >= 0
+}
+
+/** Clears the advice region, if present. */
+function clearAdvice(): void {
+  const region = document.getElementById('advice')
+  if (region !== null) region.innerHTML = ''
+}
+
+/** Reads the form, computes, and renders the result — or an empty/validation state. */
 function compute(): void {
   const profile = el<HTMLSelectElement>('profile').value as Profile
   const result = el('result')
+  if (!hasData(profile)) {
+    // No real figures yet → honest empty state, never a demo computation.
+    result.innerHTML = EMPTY_STATE_HTML
+    clearAdvice()
+    renderDashboardRegion(profile)
+    return
+  }
   try {
     result.innerHTML = renderResult(buildViewModel(profile))
     renderAdviceRegion(profile)
   } catch {
     result.innerHTML = INVALID_INPUT_HTML
-    const region = document.getElementById('advice')
-    if (region !== null) region.innerHTML = ''
+    clearAdvice()
   }
   renderDashboardRegion(profile)
 }
@@ -172,10 +197,26 @@ function compute(): void {
 /** The pages of the app shell, matched to `[data-page]` / `data-route` in the DOM. */
 const PAGES = ['accueil', 'espace', 'situation', 'transactions', 'resultats'] as const
 
+/** The shell router, once wired (null on minimal test DOMs without `#app-shell`). */
+let router: Router | null = null
+
+/**
+ * Locks or unlocks the whole app around the personal space. Locked = only the connection
+ * screen (`espace`) is reachable; the other pages and nav links are hidden. This is enforced
+ * both by CSS (`.app.locked`) and by the router (any route resolves to `espace` while locked),
+ * so nothing — data, results, advice — is visible until a space is open.
+ */
+function gate(unlocked: boolean): void {
+  const shell = document.getElementById('app-shell')
+  if (shell === null) return
+  shell.classList.toggle('locked', !unlocked)
+  router?.navigate(unlocked ? 'accueil' : 'espace')
+}
+
 /**
  * Wires the multi-page shell if present: a hash router shows one `[data-page]` at a time and
- * highlights the matching nav link. Opt-in — absent on minimal test DOMs, where the app stays
- * a single stacked view. Nav anchors drive the hash directly, so the router just reacts.
+ * highlights the matching nav link. Opt-in — absent on minimal test DOMs. Nav anchors drive the
+ * hash directly, so the router just reacts. While locked, every route resolves to `espace`.
  */
 function initShell(): void {
   const shell = document.getElementById('app-shell')
@@ -183,18 +224,23 @@ function initShell(): void {
   shell.classList.add('router-on')
 
   const showPage = (route: string): void => {
+    // While locked, force the connection screen regardless of the requested route.
+    const effective = shell.classList.contains('locked') && route !== 'espace' ? 'espace' : route
     for (const page of Array.from(document.querySelectorAll<HTMLElement>('[data-page]'))) {
-      page.classList.toggle('is-active', page.dataset['page'] === route)
+      page.classList.toggle('is-active', page.dataset['page'] === effective)
     }
     for (const link of Array.from(document.querySelectorAll<HTMLElement>('.nav-link'))) {
-      link.classList.toggle('is-active', link.dataset['route'] === route)
+      link.classList.toggle('is-active', link.dataset['route'] === effective)
     }
-    if (route === 'accueil') {
+    if (effective === 'accueil') {
       renderDashboardRegion(el<HTMLSelectElement>('profile').value as Profile)
     }
   }
 
-  const router = createRouter({ routes: PAGES, defaultRoute: 'accueil', onChange: showPage })
+  router = createRouter({ routes: PAGES, defaultRoute: 'accueil', onChange: showPage })
+  // Gate only when there is a space to connect to: no #vault panel → open app (pure simulator).
+  // With a panel, the app starts locked (never open at boot) until a space is unlocked.
+  gate(vaultPanel === null ? true : vaultPanel.isUnlocked())
   router.start()
 }
 
@@ -298,7 +344,11 @@ function initVault(): void {
     genId,
     readForm,
     applySnapshot,
-    onOpened: () => txPanel?.refresh(),
+    onOpened: () => {
+      txPanel?.refresh()
+      gate(true)
+    },
+    onLocked: () => gate(false),
   })
 }
 

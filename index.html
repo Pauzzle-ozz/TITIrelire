@@ -301,6 +301,9 @@
       /* Progressive enhancement: without JS every page stacks; the router hides all but one. */
       .router-on .page { display: none; }
       .router-on .page.is-active { display: block; animation: rise 0.28s ease both; }
+      /* Gated: while locked, only the connection screen is reachable. */
+      .app.locked .nav-link:not([data-route="espace"]) { display: none; }
+      .app.locked .side-foot::after { content: " Connectez-vous pour accéder à l'outil."; }
 
       /* ── Dashboard ─────────────────────────────────────────────────────────── */
       .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
@@ -464,7 +467,7 @@
             </div>
             <div class="field">
               <label for="revenue">Chiffre d'affaires annuel (€)</label>
-              <input id="revenue" type="number" min="0" step="100" value="40000" />
+              <input id="revenue" type="number" min="0" step="100" placeholder="votre CA réel" />
             </div>
             <div class="field">
               <label for="parts">Parts de quotient familial</label>
@@ -488,7 +491,7 @@
           <div id="fields-particulier" class="profile-fields" hidden>
             <div class="field">
               <label for="p-salaire">Salaire net imposable annuel (€)</label>
-              <input id="p-salaire" type="number" min="0" step="100" value="40000" />
+              <input id="p-salaire" type="number" min="0" step="100" placeholder="votre salaire réel" />
             </div>
             <div class="field">
               <label for="p-parts">Parts de quotient familial</label>
@@ -512,7 +515,7 @@
           <div id="fields-societe" class="profile-fields" hidden>
             <div class="field">
               <label for="s-benefice">Bénéfice imposable avant IS (€)</label>
-              <input id="s-benefice" type="number" min="0" step="1000" value="100000" />
+              <input id="s-benefice" type="number" min="0" step="1000" placeholder="votre bénéfice réel" />
             </div>
             <div class="field">
               <label for="s-dividendes">Dividende distribué (€) — sinon tout le résultat</label>

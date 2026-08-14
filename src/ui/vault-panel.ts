@@ -32,6 +32,8 @@ export interface VaultPanelDeps {
   applySnapshot: (state: VaultState) => void
   /** Called once a space is open (after create or unlock), e.g. to refresh other panels. */
   onOpened?: () => void
+  /** Called when the space is locked (lock or switch), e.g. to re-gate the app. */
+  onLocked?: () => void
   /** Optional WebCrypto override (defaults to the platform's). */
   cryptoDeps?: CryptoDeps
 }
@@ -176,6 +178,7 @@ export function initVaultPanel(deps: VaultPanelDeps): VaultPanelHandle | null {
     if (newPass !== null) newPass.value = ''
     showLocked()
     setMsg(message)
+    deps.onLocked?.()
   }
 
   lockBtn?.addEventListener('click', () => relock('Espace verrouillé.'))
